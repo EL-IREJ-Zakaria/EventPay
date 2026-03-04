@@ -1,0 +1,87 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // ═══════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Check if current user is an ADMIN
+    function isAdmin() {
+      return isAuthenticated() && 
+        firestore.get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+    }
+    
+    // Check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // DEFAULT READ ACCESS
+    // ═══════════════════════════════════════════════════════════════
+    match /{allPaths=**} {
+      allow read: if isAuthenticated();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // EVENT IMAGES
+    // Only admins can upload event images
+    // ═══════════════════════════════════════════════════════════════
+    match /event-images/{imageId} {
+      allow write: if isAuthenticated() 
+        && isAdmin()
+        && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+        && request.resource.contentType.matches('image/.*');
+      
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // USER PROFILE IMAGES
+    // Users can upload their own profile images
+    // ═══════════════════════════════════════════════════════════════
+    match /user-profiles/{userId}/{imageId} {
+      allow write: if isAuthenticated() 
+        && isOwner(userId)
+        && request.resource.size < 2 * 1024 * 1024  // 2MB limit
+        && request.resource.contentType.matches('image/.*');
+      
+      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // TICKET QR CODES
+    // Users can upload their ticket QR codes
+    // ═══════════════════════════════════════════════════════════════
+    match /ticket-qr-codes/{userId}/{ticketId} {
+      allow write: if isAuthenticated() 
+        && (isOwner(userId) || isAdmin())
+        && request.resource.size < 1 * 1024 * 1024  // 1MB limit
+        && request.resource.contentType.matches('image/.*');
+      
+      allow read: if isAuthenticated();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // BACKUP FILES (Admin only)
+    // ═══════════════════════════════════════════════════════════════
+    match /backups/{filename} {
+      allow write: if isAuthenticated() && isAdmin();
+      allow read: if isAuthenticated() && isAdmin();
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // DEFAULT DENY
+    // ═══════════════════════════════════════════════════════════════
+    match /{document=**} {
+      allow write: if false;
+    }
+  }
+}

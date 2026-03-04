@@ -1,0 +1,243 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ═══════════════════════════════════════════════════════════════
+    // HELPER FUNCTIONS
+    // ═══════════════════════════════════════════════════════════════
+    
+    // Check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Get the current user's document
+    function getUser(userId) {
+      return get(/databases/$(database)/documents/users/$(userId));
+    }
+    
+    // Check if current user is an ADMIN
+    function isAdmin() {
+      return isAuthenticated() && 
+        getUser(request.auth.uid).data.role == 'ADMIN';
+    }
+    
+    // Check if current user is a SCANNER
+    function isScanner() {
+      return isAuthenticated() && 
+        getUser(request.auth.uid).data.role == 'SCANNER';
+    }
+    
+    // Check if current user is an ATTENDEE
+    function isAttendee() {
+      return isAuthenticated() && 
+        getUser(request.auth.uid).data.role == 'ATTENDEE';
+    }
+    
+    // Check if user owns the document
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // Check if user is active
+    function isActiveUser(userId) {
+      return getUser(userId).data.isActive == true;
+    }
+    
+    // Check if scanner is assigned to an event
+    function isAssignedToEvent(eventId) {
+      return isScanner() && 
+        request.auth.uid in get(/databases/$(database)/documents/events/$(eventId)).data.assignedScanners;
+    }
+    
+    // Validate email format
+    function isValidEmail(email) {
+      return email.matches('^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$');
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // USERS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    match /users/{userId} {
+      // Anyone can read their own data, admins can read all
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Admins can create any user; authenticated users can self-register (own UID only)
+      allow create: if isAuthenticated()
+        && request.auth.uid == request.resource.data.id
+        && isValidEmail(request.resource.data.email)
+        && request.resource.data.role in ['ADMIN', 'SCANNER', 'ATTENDEE']
+        && request.resource.data.keys().hasAll(['id', 'email', 'fullName', 'role', 'isActive', 'createdAt'])
+        || isAdmin()
+        && isValidEmail(request.resource.data.email)
+        && request.resource.data.role in ['ADMIN', 'SCANNER', 'ATTENDEE']
+        && request.resource.data.keys().hasAll(['id', 'email', 'fullName', 'role', 'isActive', 'createdAt']);
+      
+      // Admins can update any user, users can update their own profile (limited fields)
+      allow update: if isAdmin() 
+        || (isOwner(userId) && 
+            request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['fullName', 'phone', 'profileImageUrl', 'preferences', 'lastLoginAt']));
+      
+      // Only admins can delete users, and cannot delete themselves
+      allow delete: if isAdmin() && request.auth.uid != userId;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // EVENTS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    match /events/{eventId} {
+      // Admins can read all events
+      // Scanners can read events they're assigned to
+      // Attendees can read published events
+      allow read: if isAdmin() 
+        || (isScanner() && request.auth.uid in resource.data.assignedScanners)
+        || (isAttendee() && resource.data.isPublished == true)
+        || (isAuthenticated() && resource.data.organizerId == request.auth.uid);
+      
+      // Only admins can create events
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll(['id', 'name', 'location', 'date', 'endDate', 'organizerId', 'status'])
+        && request.resource.data.organizerId == request.auth.uid
+        && request.resource.data.totalTickets >= 0
+        && request.resource.data.ticketPrice >= 0;
+      
+      // Only admins can update events they own
+      allow update: if isAdmin()
+        && resource.data.organizerId == request.auth.uid
+        && request.resource.data.totalTickets >= request.resource.data.soldTickets
+        && request.resource.data.updatedAt > resource.data.updatedAt;
+      
+      // Only admins can delete their own events with no sold tickets
+      allow delete: if isAdmin() 
+        && resource.data.organizerId == request.auth.uid
+        && resource.data.soldTickets == 0;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // TICKETS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    match /tickets/{ticketId} {
+      // Admins can read all tickets
+      // Scanners can read tickets for assigned events
+      // Attendees can read their own tickets
+      allow read: if isAdmin() 
+        || isOwner(resource.data.userId)
+        || (isScanner() && isAssignedToEvent(resource.data.eventId));
+      
+      // Only admins can create tickets
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasAll(['id', 'eventId', 'userId', 'ticketType', 'price', 'status', 'qrCode'])
+        && request.resource.data.price >= 0
+        && request.resource.data.status in ['ACTIVE', 'USED', 'REFUNDED', 'CANCELLED'];
+      
+      // Only admins can update tickets (for refunds, etc.)
+      // Scanners can update check-in fields only
+      allow update: if isAdmin()
+        || (isScanner() 
+            && isAssignedToEvent(resource.data.eventId)
+            && request.resource.data.diff(resource.data).affectedKeys()
+              .hasOnly(['status', 'checkedInAt', 'checkedInBy', 'deviceId', 'location']));
+      
+      // Only admins can delete tickets (rarely used)
+      allow delete: if isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // CHECK-INS COLLECTION (APPEND-ONLY)
+    // ═══════════════════════════════════════════════════════════════
+    match /checkIns/{checkInId} {
+      // Admins can read all check-ins
+      // Scanners can read their own check-ins
+      allow read: if isAdmin() 
+        || (isScanner() && resource.data.scannedBy == request.auth.uid);
+      
+      // Admins and assigned scanners can create check-ins
+      allow create: if isAuthenticated()
+        && request.resource.data.keys().hasAll(['id', 'ticketId', 'eventId', 'scannedBy', 'scannedAt', 'result'])
+        && request.resource.data.scannedBy == request.auth.uid
+        && (isAdmin() || isAssignedToEvent(request.resource.data.eventId))
+        && request.resource.data.result in ['SUCCESS', 'ALREADY_SCANNED', 'INVALID', 'NOT_FOUND', 'ERROR', 'WRONG_EVENT'];
+      
+      // Check-ins are immutable - no updates allowed
+      allow update: if false;
+      
+      // No deletes allowed
+      allow delete: if false;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // SCANNER ASSIGNMENTS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    match /scannerAssignments/{assignmentId} {
+      // Admins can read all assignments
+      // Scanners can read their own assignments
+      allow read: if isAdmin() 
+        || (isScanner() && resource.data.scannerId == request.auth.uid);
+      
+      // Only admins can create/update assignments
+      allow create, update: if isAdmin()
+        && request.resource.data.keys().hasAll(['id', 'scannerId', 'eventId', 'assignedBy', 'assignedAt', 'isActive']);
+      
+      // Only admins can delete assignments
+      allow delete: if isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // AUDIT LOGS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    match /auditLogs/{logId} {
+      // Only admins can read audit logs
+      allow read: if isAdmin();
+      
+      // Authenticated users can create audit logs (for their actions)
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasAll(['id', 'timestamp', 'userId', 'action', 'category']);
+      
+      // No updates or deletes allowed
+      allow update, delete: if false;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // TRANSACTIONS COLLECTION
+    // ═══════════════════════════════════════════════════════════════
+    match /transactions/{transactionId} {
+      // Admins can read all transactions
+      // Users can read their own transactions
+      allow read: if isAdmin()
+        || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      
+      // Admins and authenticated users (cashiers) can create transactions
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.amount >= 0
+        && request.resource.data.keys().hasAll(['id', 'userId', 'type', 'amount', 'status', 'paymentMethod'])
+        || isAdmin();
+      
+      // Only admins can update transactions (refunds, corrections)
+      allow update: if isAdmin();
+      
+      // No deletes allowed
+      allow delete: if false;
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // ANALYTICS COLLECTION (AGGREGATED DATA)
+    // ═══════════════════════════════════════════════════════════════
+    match /analytics/{document} {
+      // Only admins can read analytics
+      allow read: if isAdmin();
+      
+      // Only Cloud Functions can write analytics
+      allow write: if false;  // Written by backend functions only
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // DEFAULT DENY
+    // ═══════════════════════════════════════════════════════════════
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
