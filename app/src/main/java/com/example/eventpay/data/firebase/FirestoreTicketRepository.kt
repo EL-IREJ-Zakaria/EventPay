@@ -38,7 +38,7 @@ class FirestoreTicketRepository {
     fun getTicketsByUserFlow(userId: String): Flow<List<Ticket>> = callbackFlow {
         val listener = ticketsCollection
             .whereEqualTo("userId", userId)
-            .orderBy("purchaseDate", Query.Direction.DESCENDING)
+            .orderBy("reservationDate", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
                     close(error)
@@ -118,10 +118,10 @@ class FirestoreTicketRepository {
                 userId = userId,
                 qrCode = qrCode,
                 ticketType = ticketType,
-                price = price,
+                /* price = */ //  price,
                 isCheckedIn = false,
                 checkedInAt = null,
-                purchaseDate = System.currentTimeMillis()
+                reservationDate = System.currentTimeMillis()
             )
             
             val docRef = ticketsCollection.add(ticket).await()
@@ -210,7 +210,22 @@ class FirestoreTicketRepository {
         }
     }
     
-    // Delete ticket
+    suspend fun getTicketsByEvent(eventId: String): Result<List<Ticket>> {
+        return try {
+            val snapshot = ticketsCollection
+                .whereEqualTo("eventId", eventId)
+                .orderBy("reservationDate", Query.Direction.DESCENDING)
+                .get()
+                .await()
+            val tickets = snapshot.documents.mapNotNull { doc ->
+                doc.toObject(Ticket::class.java)?.copy(id = doc.id)
+            }
+            Result.success(tickets)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun deleteTicket(ticketId: String): Result<Unit> {
         return try {
             ticketsCollection.document(ticketId).delete().await()
@@ -302,7 +317,7 @@ class FirestoreTicketRepository {
                     )
                     return CheckInAttemptResult.InvalidTicket("Ticket was cancelled")
                 }
-                ticket.status == TicketStatus.REFUNDED -> {
+                ticket.status == /* TicketStatus.REFUNDED */ TicketStatus.CANCELLED -> {
                     recordFailedCheckIn(
                         ticketId = ticket.id,
                         eventId = eventId,
@@ -381,8 +396,7 @@ class FirestoreTicketRepository {
                 id = ticket.id,
                 status = TicketStatus.USED,
                 isCheckedIn = true,
-                checkedInAt = now,
-                lastModified = now
+                checkedInAt = now
             )
 
             val checkInRecord = CheckInRecord(

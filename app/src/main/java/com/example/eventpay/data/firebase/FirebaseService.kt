@@ -3,11 +3,13 @@ package com.example.eventpay.data.firebase
 import com.example.eventpay.data.model.User
 import com.example.eventpay.data.model.UserRole
 import com.example.eventpay.domain.model.CheckInResult
+import android.net.Uri
 import com.google.firebase.FirebaseApp
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.FieldValue
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.tasks.await
 class FirebaseService {
     private val auth: FirebaseAuth = FirebaseAuth.getInstance()
     private val firestore: FirebaseFirestore = FirebaseFirestore.getInstance()
+    private val storage: FirebaseStorage = FirebaseStorage.getInstance()
 
     private val usersCollection = firestore.collection("users")
     private val eventsCollection = firestore.collection("events")
@@ -312,6 +315,88 @@ class FirebaseService {
             val totalScanners = scannersSnap.size()
 
             Result.success(DashboardStats(totalEvents, totalTickets, totalCheckIns, totalScanners))
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    // ─── Storage Operations ───────────────────────────────────────────────────
+
+    suspend fun uploadEventImage(imageUri: Uri, eventId: String): Result<String> {
+        return try {
+            val ref = storage.reference.child("event-images/$eventId/${System.currentTimeMillis()}.jpg")
+            ref.putFile(imageUri).await()
+            val downloadUrl = ref.downloadUrl.await().toString()
+            Result.success(downloadUrl)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun uploadUserProfileImage(imageUri: Uri, userId: String): Result<String> {
+        return try {
+            val ref = storage.reference.child("user-profiles/$userId/avatar.jpg")
+            ref.putFile(imageUri).await()
+            val downloadUrl = ref.downloadUrl.await().toString()
+            usersCollection.document(userId).update("profileImageUrl", downloadUrl).await()
+            Result.success(downloadUrl)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun deleteEventImage(imageUrl: String): Result<Unit> {
+        return try {
+            storage.getReferenceFromUrl(imageUrl).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getUsersByIds(userIds: List<String>): Result<List<User>> {
+        return try {
+            if (userIds.isEmpty()) return Result.success(emptyList())
+            val chunks = userIds.chunked(10)
+            val users = mutableListOf<User>()
+            for (chunk in chunks) {
+                val snapshot = usersCollection.whereIn("id", chunk).get().await()
+                users.addAll(snapshot.documents.mapNotNull { it.toObject(User::class.java) })
+            }
+            Result.success(users)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun createManualParticipant(
+        eventId: String,
+        name: String,
+        email: String,
+        phone: String,
+        ticketType: com.example.eventpay.data.model.TicketType,
+        adminId: String
+    ): Result<String> {
+        return try {
+            val qrCode = "TKT-${java.util.UUID.randomUUID().toString().take(8).uppercase()}"
+            val ticketData = mapOf(
+                "eventId" to eventId,
+                "userId" to "manual_${System.currentTimeMillis()}",
+                "qrCode" to qrCode,
+                "ticketType" to ticketType.name,
+                "isCheckedIn" to false,
+                "checkedInAt" to null,
+                "reservationDate" to System.currentTimeMillis(),
+                "status" to com.example.eventpay.data.model.TicketStatus.ACTIVE.name,
+                "notes" to "Added manually by admin",
+                "createdBy" to adminId,
+                "participantName" to name,
+                "participantEmail" to email,
+                "participantPhone" to phone
+            )
+            val docRef = ticketsCollection.add(ticketData).await()
+            ticketsCollection.document(docRef.id).update("id", docRef.id).await()
+            Result.success(docRef.id)
         } catch (e: Exception) {
             Result.failure(e)
         }

@@ -64,7 +64,7 @@ data class OfflineTicketEntity(
     val userId: String,
     val ticketType: String,
     val price: Double,
-    val purchaseDate: Long,
+    val reservationDate: Long,
     val status: String,
     val qrCode: String,
     val seatNumber: String? = null,

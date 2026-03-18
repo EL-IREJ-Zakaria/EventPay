@@ -121,7 +121,7 @@ class CashierViewModel(
                     _state.value = _state.value.copy(
                         isLoading = false,
                         events = events.filter { 
-                            it.totalTickets > it.soldTickets 
+                            it.totalTickets > it.reservedTickets 
                         }
                     )
                 },
@@ -356,7 +356,7 @@ class CashierViewModel(
                     ).fold(
                         onSuccess = { transaction ->
                             // Update event sold tickets count
-                            eventRepository.incrementSoldTickets(eventId)
+                            eventRepository.incrementreservedTickets(eventId)
                             
                             // Update shift stats
                             updateShiftStats(price, paymentMethod)
@@ -469,17 +469,10 @@ class CashierViewModel(
     
     /**
      * Get ticket price based on type and event
+     * All tickets are now free for CMC School events
      */
     fun getTicketPrice(ticketType: com.example.eventpay.data.model.TicketType, event: Event): Double {
-        return when (ticketType) {
-            com.example.eventpay.data.model.TicketType.STANDARD -> event.ticketPrice
-            com.example.eventpay.data.model.TicketType.VIP -> event.vipPrice ?: (event.ticketPrice * 2.0)
-            com.example.eventpay.data.model.TicketType.PREMIUM -> event.ticketPrice * 2.5
-            com.example.eventpay.data.model.TicketType.EARLY_BIRD -> event.ticketPrice * 0.8
-            com.example.eventpay.data.model.TicketType.STUDENT -> event.ticketPrice * 0.7
-            com.example.eventpay.data.model.TicketType.GROUP -> event.ticketPrice * 0.75
-            com.example.eventpay.data.model.TicketType.PASS -> event.ticketPrice * 3.0
-        }
+        return 0.0 // All tickets are free
     }
     
     /**

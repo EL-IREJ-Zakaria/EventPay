@@ -510,7 +510,7 @@ data class TicketServerData(
     val eventName: String = "",
     val ticketType: String = "GENERAL",
     val price: Double = 0.0,
-    val purchaseDate: Long = System.currentTimeMillis()
+    val reservationDate: Long = System.currentTimeMillis()
 ) {
     fun toOfflineEntity(): OfflineTicketEntity = OfflineTicketEntity(
         id = id,
@@ -525,7 +525,7 @@ data class TicketServerData(
         syncStatus = SyncStatus.SYNCED.name,
         ticketType = ticketType,
         price = price,
-        purchaseDate = purchaseDate
+        reservationDate = reservationDate
     )
 }
 

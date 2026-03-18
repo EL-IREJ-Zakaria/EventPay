@@ -7,18 +7,8 @@ import com.example.eventpay.domain.model.Event as DomainEvent
 import com.example.eventpay.domain.model.EventCategory as DomainEventCategory
 import com.example.eventpay.domain.model.EventStatus as DomainEventStatus
 
-/**
- * Mapper for Event entity
- * 
- * Converts between domain and data layer representations.
- * Domain models are pure Kotlin classes.
- * Data models are Room entities with persistence annotations.
- */
 object EventMapper {
     
-    /**
-     * Convert from Data layer to Domain layer
-     */
     fun DataEvent.toDomain(): DomainEvent {
         return DomainEvent(
             id = id,
@@ -27,9 +17,8 @@ object EventMapper {
             location = location,
             date = date,
             endDate = endDate,
-            ticketPrice = ticketPrice,
             totalTickets = totalTickets,
-            soldTickets = soldTickets,
+            reservedTickets = reservedTickets,
             organizerId = organizerId,
             createdAt = createdAt,
             imageUrl = imageUrl,
@@ -39,9 +28,11 @@ object EventMapper {
             endTime = endTime,
             capacity = capacity,
             checkedInCount = checkedInCount,
-            vipPrice = vipPrice,
             vipTickets = vipTickets,
-            vipSold = vipSold,
+            vipReserved = vipReserved,
+            earlyBirdTickets = earlyBirdTickets,
+            earlyBirdReserved = earlyBirdReserved,
+            ticketPrice = ticketPrice,
             isPublished = isPublished,
             tags = tags,
             contactEmail = contactEmail,
@@ -51,9 +42,6 @@ object EventMapper {
         )
     }
     
-    /**
-     * Convert from Domain layer to Data layer
-     */
     fun DomainEvent.toData(): DataEvent {
         return DataEvent(
             id = id,
@@ -62,9 +50,8 @@ object EventMapper {
             location = location,
             date = date,
             endDate = endDate,
-            ticketPrice = ticketPrice,
             totalTickets = totalTickets,
-            soldTickets = soldTickets,
+            reservedTickets = reservedTickets,
             organizerId = organizerId,
             createdAt = createdAt,
             imageUrl = imageUrl,
@@ -74,9 +61,11 @@ object EventMapper {
             endTime = endTime,
             capacity = capacity,
             checkedInCount = checkedInCount,
-            vipPrice = vipPrice,
             vipTickets = vipTickets,
-            vipSold = vipSold,
+            vipReserved = vipReserved,
+            earlyBirdTickets = earlyBirdTickets,
+            earlyBirdReserved = earlyBirdReserved,
+            ticketPrice = ticketPrice,
             isPublished = isPublished,
             tags = tags,
             contactEmail = contactEmail,
@@ -86,35 +75,11 @@ object EventMapper {
         )
     }
     
-    /**
-     * Convert list of data events to domain
-     */
-    fun List<DataEvent>.toDomainList(): List<DomainEvent> {
-        return map { it.toDomain() }
-    }
+    fun List<DataEvent>.toDomainList(): List<DomainEvent> = map { it.toDomain() }
+    fun List<DomainEvent>.toDataList(): List<DataEvent> = map { it.toData() }
     
-    /**
-     * Convert list of domain events to data
-     */
-    fun List<DomainEvent>.toDataList(): List<DataEvent> {
-        return map { it.toData() }
-    }
-    
-    // Category mapping
-    private fun DataEventCategory.toDomain(): DomainEventCategory {
-        return DomainEventCategory.valueOf(name)
-    }
-    
-    private fun DomainEventCategory.toData(): DataEventCategory {
-        return DataEventCategory.valueOf(name)
-    }
-    
-    // Status mapping
-    private fun DataEventStatus.toDomain(): DomainEventStatus {
-        return DomainEventStatus.valueOf(name)
-    }
-    
-    private fun DomainEventStatus.toData(): DataEventStatus {
-        return DataEventStatus.valueOf(name)
-    }
+    private fun DataEventCategory.toDomain(): DomainEventCategory = DomainEventCategory.valueOf(name)
+    private fun DomainEventCategory.toData(): DataEventCategory = DataEventCategory.valueOf(name)
+    private fun DataEventStatus.toDomain(): DomainEventStatus = DomainEventStatus.valueOf(name)
+    private fun DomainEventStatus.toData(): DataEventStatus = DataEventStatus.valueOf(name)
 }

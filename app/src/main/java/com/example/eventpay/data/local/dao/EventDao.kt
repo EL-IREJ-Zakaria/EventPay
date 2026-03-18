@@ -45,15 +45,12 @@ interface EventDao {
     @Query("DELETE FROM events WHERE id = :eventId")
     suspend fun deleteEventById(eventId: String)
 
-    @Query("UPDATE events SET soldTickets = soldTickets + :ticketsSold, vipSold = vipSold + :vipTicketsSold WHERE id = :eventId")
-    suspend fun updateTicketSales(eventId: String, ticketsSold: Int, vipTicketsSold: Int)
+    @Query("UPDATE events SET reservedTickets = reservedTickets + :ticketsReserved, vipReserved = vipReserved + :vipTicketsReserved WHERE id = :eventId")
+    suspend fun updateTicketReservations(eventId: String, ticketsReserved: Int, vipTicketsReserved: Int)
 
     @Query("UPDATE events SET checkedInCount = checkedInCount + :increment WHERE id = :eventId")
     suspend fun updateCheckInCount(eventId: String, increment: Int)
 
-    @Query("UPDATE events SET soldTickets = soldTickets + 1 WHERE id = :eventId")
-    suspend fun incrementSoldTickets(eventId: String)
-
-    @Query("SELECT SUM(soldTickets * ticketPrice) FROM events WHERE organizerId = :organizerId")
-    suspend fun getTotalRevenue(organizerId: String): Double?
+    @Query("UPDATE events SET reservedTickets = reservedTickets + 1 WHERE id = :eventId")
+    suspend fun incrementReservedTickets(eventId: String)
 }

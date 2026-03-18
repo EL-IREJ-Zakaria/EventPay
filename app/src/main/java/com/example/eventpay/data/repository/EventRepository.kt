@@ -31,11 +31,7 @@ class EventRepository(private val eventDao: EventDao) {
         eventDao.deleteEvent(event)
     }
 
-    suspend fun incrementSoldTickets(eventId: String) {
-        eventDao.incrementSoldTickets(eventId)
-    }
-
-    suspend fun getTotalRevenue(organizerId: String): Double {
-        return eventDao.getTotalRevenue(organizerId) ?: 0.0
+    suspend fun incrementReservedTickets(eventId: String) {
+        eventDao.incrementReservedTickets(eventId)
     }
 }

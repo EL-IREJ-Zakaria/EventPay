@@ -26,7 +26,4 @@ interface UserDao {
 
     @Delete
     suspend fun deleteUser(user: User)
-
-    @Query("UPDATE users SET walletBalance = :balance WHERE id = :userId")
-    suspend fun updateWalletBalance(userId: String, balance: Double)
 }

@@ -42,8 +42,8 @@ class TicketRepository(private val ticketDao: TicketDao) {
             eventId = eventId,
             userId = userId,
             qrCode = generateQRCode(),
-            price = price,
-            purchaseDate = System.currentTimeMillis()
+            /* price = */ //  price,
+            reservationDate = System.currentTimeMillis()
         )
         ticketDao.insertTicket(ticket)
         return ticket

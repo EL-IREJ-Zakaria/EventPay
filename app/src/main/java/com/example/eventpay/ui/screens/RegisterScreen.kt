@@ -2,12 +2,12 @@ package com.example.eventpay.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -27,7 +27,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.eventpay.data.model.UserRole
@@ -46,7 +45,6 @@ fun RegisterScreen(
     var password by remember { mutableStateOf("") }
     var fullName by remember { mutableStateOf("") }
     var selectedRole by remember { mutableStateOf(UserRole.SCANNER) }
-    var expanded by remember { mutableStateOf(false) }
     var passwordVisible by remember { mutableStateOf(false) }
     var isEntered by remember { mutableStateOf(false) }
 
@@ -58,7 +56,7 @@ fun RegisterScreen(
     LaunchedEffect(Unit) { isEntered = true }
 
     val cardSlide by animateFloatAsState(
-        targetValue = if (isEntered) 0f else 800f,
+        targetValue = if (isEntered) 0f else 900f,
         animationSpec = spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMediumLow),
         label = "cardSlide"
     )
@@ -75,13 +73,13 @@ fun RegisterScreen(
 
     val infiniteTransition = rememberInfiniteTransition(label = "regBg")
     val float1 by infiniteTransition.animateFloat(
-        initialValue = -18f, targetValue = 18f,
-        animationSpec = infiniteRepeatable(tween(3200, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        initialValue = -20f, targetValue = 20f,
+        animationSpec = infiniteRepeatable(tween(3400, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "f1"
     )
     val float2 by infiniteTransition.animateFloat(
-        initialValue = 15f, targetValue = -15f,
-        animationSpec = infiniteRepeatable(tween(2500, easing = FastOutSlowInEasing), RepeatMode.Reverse),
+        initialValue = 18f, targetValue = -18f,
+        animationSpec = infiniteRepeatable(tween(2700, easing = FastOutSlowInEasing), RepeatMode.Reverse),
         label = "f2"
     )
 
@@ -89,292 +87,313 @@ fun RegisterScreen(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Brush.verticalGradient(listOf(GradientStart, GradientMid, PrimaryDark)))
+                .background(
+                    Brush.linearGradient(
+                        colorStops = arrayOf(
+                            0f to Color(0xFF1A0A3D),
+                            0.4f to GradientStart,
+                            0.72f to GradientMid,
+                            1f to Color(0xFF08060F)
+                        ),
+                        start = Offset(0f, 0f),
+                        end = Offset(400f, 1600f)
+                    )
+                )
         )
 
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(Secondary.copy(alpha = 0.22f), Color.Transparent),
-                    center = Offset(size.width * 0.86f + float1 * 0.6f, size.height * 0.1f + float1 * 0.3f),
-                    radius = 240f
+                    listOf(AuroraCyan.copy(alpha = 0.18f), Color.Transparent),
+                    center = Offset(size.width * 0.85f + float1, size.height * 0.08f + float1 * 0.3f),
+                    radius = 310f
                 ),
-                radius = 240f,
-                center = Offset(size.width * 0.86f + float1 * 0.6f, size.height * 0.1f + float1 * 0.3f)
+                radius = 310f,
+                center = Offset(size.width * 0.85f + float1, size.height * 0.08f + float1 * 0.3f)
             )
             drawCircle(
                 brush = Brush.radialGradient(
-                    listOf(GradientAccent.copy(alpha = 0.16f), Color.Transparent),
-                    center = Offset(size.width * 0.1f + float2 * 0.5f, size.height * 0.16f + float2 * 0.4f),
-                    radius = 200f
+                    listOf(AuroraPink.copy(alpha = 0.14f), Color.Transparent),
+                    center = Offset(size.width * 0.12f + float2, size.height * 0.2f + float2 * 0.4f),
+                    radius = 270f
                 ),
-                radius = 200f,
-                center = Offset(size.width * 0.1f + float2 * 0.5f, size.height * 0.16f + float2 * 0.4f)
+                radius = 270f,
+                center = Offset(size.width * 0.12f + float2, size.height * 0.2f + float2 * 0.4f)
+            )
+            drawCircle(
+                brush = Brush.radialGradient(
+                    listOf(AuroraViolet.copy(alpha = 0.12f), Color.Transparent),
+                    center = Offset(size.width * 0.5f, size.height * 0.32f),
+                    radius = 380f
+                ),
+                radius = 380f,
+                center = Offset(size.width * 0.5f, size.height * 0.32f)
             )
         }
 
-        IconButton(
-            onClick = onNavigateToLogin,
+        Column(
             modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(top = 52.dp, start = 20.dp)
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
-                .background(Color.White.copy(alpha = 0.18f))
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White)
-        }
-
-        Column(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(0.75f)
+                    .weight(0.28f)
                     .graphicsLayer { alpha = heroAlpha; translationY = heroTranslation },
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(76.dp)
-                        .clip(RoundedCornerShape(24.dp))
+                        .size(72.dp)
+                        .clip(RoundedCornerShape(22.dp))
                         .background(Color.White.copy(alpha = 0.15f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(62.dp)
-                            .clip(RoundedCornerShape(18.dp))
-                            .background(Color.White.copy(alpha = 0.93f)),
+                            .size(58.dp)
+                            .clip(RoundedCornerShape(16.dp))
+                            .background(Brush.linearGradient(listOf(Color.White.copy(0.95f), Color.White.copy(0.75f)))),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Filled.PersonAdd,
-                            contentDescription = null,
-                            tint = GradientStart,
-                            modifier = Modifier.size(34.dp)
-                        )
+                        Icon(Icons.Filled.PersonAdd, contentDescription = null, tint = GradientStart, modifier = Modifier.size(30.dp))
                     }
                 }
+
                 Spacer(modifier = Modifier.height(16.dp))
+
                 Text(
                     "Join EventPay",
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White,
-                    letterSpacing = 0.5.sp
+                    letterSpacing = (-0.5).sp
                 )
-                Spacer(modifier = Modifier.height(6.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
-                    "Create your free account today",
+                    "Create your professional account",
                     style = MaterialTheme.typography.bodyMedium,
-                    color = Color.White.copy(alpha = 0.7f),
-                    textAlign = TextAlign.Center
+                    color = Color.White.copy(alpha = 0.6f),
+                    letterSpacing = 0.3.sp
                 )
             }
 
-            Column(
+            Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1.85f)
+                    .weight(0.72f)
                     .graphicsLayer { translationY = cardSlide }
-                    .clip(RoundedCornerShape(topStart = 40.dp, topEnd = 40.dp))
-                    .background(Color.White)
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 28.dp, vertical = 10.dp)
+                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                    .background(SurfaceLight)
             ) {
-                Box(
+                Column(
                     modifier = Modifier
-                        .align(Alignment.CenterHorizontally)
-                        .padding(top = 14.dp, bottom = 24.dp)
-                        .size(width = 44.dp, height = 5.dp)
-                        .clip(CircleShape)
-                        .background(OutlineVariantLight)
-                )
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 28.dp, vertical = 32.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(42.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Zinc100)
+                            .clickable { onNavigateToLogin() },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Zinc700, modifier = Modifier.size(20.dp))
+                    }
 
-                Text(
-                    "Create Account",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = OnBackgroundLight
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-                Text(
-                    "Fill in your details to get started",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = OnSurfaceVariantLight
-                )
+                    Spacer(modifier = Modifier.height(20.dp))
 
-                Spacer(modifier = Modifier.height(28.dp))
+                    Text(
+                        "Create Account",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.ExtraBold,
+                        color = Zinc900
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        "Get started with your event management journey",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = Zinc400
+                    )
 
-                PremiumTextField(
-                    value = fullName,
-                    onValueChange = { fullName = it },
-                    label = "Full Name",
-                    leadingIcon = Icons.Outlined.Person,
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Spacer(modifier = Modifier.height(28.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTextField(
+                        value = fullName,
+                        onValueChange = { fullName = it },
+                        label = "Full Name",
+                        leadingIcon = Icons.Outlined.Person,
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                PremiumTextField(
-                    value = email,
-                    onValueChange = { email = it },
-                    label = "Email Address",
-                    leadingIcon = Icons.Outlined.Email,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = "Email Address",
+                        leadingIcon = Icons.Outlined.Email,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                PremiumTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = "Password",
-                    leadingIcon = Icons.Outlined.Lock,
-                    trailingIcon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
-                    onTrailingIconClick = { passwordVisible = !passwordVisible },
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    Spacer(modifier = Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(16.dp))
+                    PremiumTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        label = "Password",
+                        leadingIcon = Icons.Outlined.Lock,
+                        trailingIcon = if (passwordVisible) Icons.Filled.Visibility else Icons.Filled.VisibilityOff,
+                        onTrailingIconClick = { passwordVisible = !passwordVisible },
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Column(modifier = Modifier.fillMaxWidth()) {
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     Text(
                         "Account Type",
                         style = MaterialTheme.typography.labelMedium,
                         fontWeight = FontWeight.SemiBold,
-                        color = OnSurfaceVariantLight,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        color = Zinc600,
+                        modifier = Modifier.padding(bottom = 10.dp)
                     )
 
-                    ExposedDropdownMenuBox(
-                        expanded = expanded,
-                        onExpandedChange = { expanded = it },
-                        modifier = Modifier.fillMaxWidth()
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        OutlinedTextField(
-                            value = selectedRole.name.lowercase().replaceFirstChar { it.uppercase() },
-                            onValueChange = {},
-                            readOnly = true,
-                            leadingIcon = {
-                                Icon(
-                                    imageVector = when (selectedRole) {
-                                        UserRole.ADMIN -> Icons.Outlined.AdminPanelSettings
-                                        UserRole.SCANNER -> Icons.Outlined.QrCodeScanner
-                                    },
-                                    contentDescription = null,
-                                    tint = Primary
-                                )
-                            },
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier
-                                .menuAnchor()
-                                .fillMaxWidth()
-                                .height(60.dp),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Primary,
-                                unfocusedBorderColor = OutlineLight,
-                                focusedContainerColor = SurfaceVariantLight.copy(alpha = 0.3f),
-                                unfocusedContainerColor = SurfaceVariantLight.copy(alpha = 0.3f)
+                        UserRole.entries.forEach { role ->
+                            val isSelected = role == selectedRole
+                            val bgColor by animateColorAsState(
+                                targetValue = if (isSelected) Primary.copy(alpha = 0.08f) else Zinc50,
+                                animationSpec = tween(200),
+                                label = "roleBg_${role.name}"
                             )
-                        )
-                        ExposedDropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false }
-                        ) {
-                            UserRole.entries.forEach { role ->
-                                DropdownMenuItem(
-                                    text = {
-                                        Text(
-                                            role.name.lowercase().replaceFirstChar { it.uppercase() },
-                                            fontWeight = if (role == selectedRole) FontWeight.Bold else FontWeight.Normal
-                                        )
-                                    },
-                                    onClick = {
-                                        selectedRole = role
-                                        expanded = false
-                                    },
-                                    leadingIcon = {
+                            val borderColor by animateColorAsState(
+                                targetValue = if (isSelected) Primary else Zinc200,
+                                animationSpec = tween(200),
+                                label = "roleBorder_${role.name}"
+                            )
+                            val iconTint by animateColorAsState(
+                                targetValue = if (isSelected) Primary else Zinc400,
+                                animationSpec = tween(200),
+                                label = "roleIcon_${role.name}"
+                            )
+
+                            Surface(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clickable { selectedRole = role },
+                                shape = RoundedCornerShape(16.dp),
+                                color = bgColor,
+                                border = BorderStroke(
+                                    width = if (isSelected) 2.dp else 1.dp,
+                                    color = borderColor
+                                )
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(16.dp),
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(44.dp)
+                                            .clip(RoundedCornerShape(13.dp))
+                                            .background(if (isSelected) Primary.copy(alpha = 0.12f) else Zinc100),
+                                        contentAlignment = Alignment.Center
+                                    ) {
                                         Icon(
                                             imageVector = when (role) {
                                                 UserRole.ADMIN -> Icons.Outlined.AdminPanelSettings
                                                 UserRole.SCANNER -> Icons.Outlined.QrCodeScanner
                                             },
                                             contentDescription = null,
-                                            tint = if (role == selectedRole) Primary else MaterialTheme.colorScheme.onSurfaceVariant
+                                            tint = iconTint,
+                                            modifier = Modifier.size(24.dp)
                                         )
                                     }
-                                )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = role.name.lowercase().replaceFirstChar { it.uppercase() },
+                                        style = MaterialTheme.typography.labelMedium,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        color = if (isSelected) Primary else Zinc500
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(24.dp))
+                    Spacer(modifier = Modifier.height(28.dp))
 
-                AnimatedVisibility(
-                    visible = authState.error != null,
-                    enter = fadeIn() + expandVertically(),
-                    exit = fadeOut() + shrinkVertically()
-                ) {
-                    Surface(
-                        color = ErrorContainer,
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 16.dp)
+                    AnimatedVisibility(
+                        visible = authState.error != null,
+                        enter = fadeIn() + expandVertically(),
+                        exit = fadeOut() + shrinkVertically()
                     ) {
-                        Row(
-                            modifier = Modifier.padding(12.dp),
-                            verticalAlignment = Alignment.CenterVertically
+                        Surface(
+                            color = ErrorContainer,
+                            shape = RoundedCornerShape(14.dp),
+                            modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp)
                         ) {
-                            Icon(Icons.Filled.Error, null, tint = Error, modifier = Modifier.size(18.dp))
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text(
-                                authState.error ?: "",
-                                color = ErrorDark,
-                                style = MaterialTheme.typography.bodySmall
-                            )
+                            Row(
+                                modifier = Modifier.padding(14.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(Icons.Filled.Error, null, tint = Error, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(10.dp))
+                                Text(authState.error ?: "", color = Zinc800, style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
-                }
 
-                AnimatedGradientButton(
-                    onClick = { authViewModel.register(email, password, fullName, selectedRole) },
-                    text = "Create Account",
-                    icon = Icons.Filled.PersonAdd,
-                    enabled = email.isNotBlank() && password.isNotBlank() && fullName.isNotBlank() && !authState.isLoading,
-                    isLoading = authState.isLoading,
-                    modifier = Modifier.fillMaxWidth()
-                )
-
-                Spacer(modifier = Modifier.height(28.dp))
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(bottom = 16.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        "Already have an account?",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = OnSurfaceVariantLight
+                    AnimatedGradientButton(
+                        onClick = { authViewModel.register(email, password, fullName, selectedRole) },
+                        text = "Create Account",
+                        icon = Icons.Filled.PersonAdd,
+                        enabled = email.isNotBlank() && password.isNotBlank() && fullName.isNotBlank() && !authState.isLoading,
+                        loading = authState.isLoading,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        "Sign In",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Primary,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.clickable { onNavigateToLogin() }
-                    )
+
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Box(modifier = Modifier.weight(1f).height(1.dp).background(Zinc100))
+                        Text("  or  ", style = MaterialTheme.typography.labelSmall, color = Zinc400)
+                        Box(modifier = Modifier.weight(1f).height(1.dp).background(Zinc100))
+                    }
+
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text("Already have an account?", style = MaterialTheme.typography.bodyMedium, color = Zinc500)
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            "Sign In",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Primary,
+                            fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.clickable { onNavigateToLogin() }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
                 }
             }
         }

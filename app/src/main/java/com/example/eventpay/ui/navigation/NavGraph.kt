@@ -1,6 +1,7 @@
 package com.example.eventpay.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.navigation.NavHostController
@@ -68,7 +69,6 @@ fun EventPayNavGraph(
                 email = dataUser.email,
                 fullName = dataUser.fullName,
                 role = com.example.eventpay.domain.model.UserRole.valueOf(dataUser.role.name),
-                walletBalance = dataUser.walletBalance,
                 createdAt = dataUser.createdAt,
                 phone = dataUser.phone,
                 profileImageUrl = dataUser.profileImageUrl,
@@ -129,7 +129,6 @@ fun EventPayNavGraph(
                 email = dataUser.email,
                 fullName = dataUser.fullName,
                 role = com.example.eventpay.domain.model.UserRole.valueOf(dataUser.role.name),
-                walletBalance = dataUser.walletBalance,
                 createdAt = dataUser.createdAt,
                 phone = dataUser.phone,
                 profileImageUrl = dataUser.profileImageUrl,
@@ -170,7 +169,6 @@ fun EventPayNavGraph(
                 email = dataUser.email,
                 fullName = dataUser.fullName,
                 role = com.example.eventpay.domain.model.UserRole.valueOf(dataUser.role.name),
-                walletBalance = dataUser.walletBalance,
                 createdAt = dataUser.createdAt,
                 phone = dataUser.phone,
                 profileImageUrl = dataUser.profileImageUrl,
@@ -214,7 +212,6 @@ fun EventPayNavGraph(
                 email = dataUser.email,
                 fullName = dataUser.fullName,
                 role = com.example.eventpay.domain.model.UserRole.valueOf(dataUser.role.name),
-                walletBalance = dataUser.walletBalance,
                 createdAt = dataUser.createdAt,
                 phone = dataUser.phone,
                 profileImageUrl = dataUser.profileImageUrl,
@@ -295,37 +292,28 @@ fun EventPayNavGraph(
             )
         }
         
-        // Wallet Route
+        // Wallet Route - Removed (wallet functionality disabled)
         composable(route = NavRoute.Wallet.route) {
-            WalletScreen(
-                userId = currentUser.id,
-                walletViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
+            // Navigate back since wallet is disabled
+            LaunchedEffect(Unit) {
+                navController.popBackStack()
+            }
         }
         
-        // Top Up Route
+        // Top Up Route - Removed (wallet functionality disabled)
         composable(route = NavRoute.TopUp.route) {
-            WalletScreen(
-                userId = currentUser.id,
-                walletViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
+            // Navigate back since wallet is disabled
+            LaunchedEffect(Unit) {
+                navController.popBackStack()
+            }
         }
         
-        // Transaction History Route
+        // Transaction History Route - Removed (wallet functionality disabled)
         composable(route = NavRoute.TransactionHistory.route) {
-            WalletScreen(
-                userId = currentUser.id,
-                walletViewModel = androidx.lifecycle.viewmodel.compose.viewModel(),
-                onBack = {
-                    navController.popBackStack()
-                }
-            )
+            // Navigate back since wallet is disabled
+            LaunchedEffect(Unit) {
+                navController.popBackStack()
+            }
         }
     }
 }

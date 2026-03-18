@@ -149,7 +149,7 @@ interface TicketRepository {
  */
 data class TicketStats(
     val totalTickets: Int = 0,
-    val soldTickets: Int = 0,
+    val reservedTickets: Int = 0,
     val checkedInTickets: Int = 0,
     val refundedTickets: Int = 0,
     val regularTickets: Int = 0,
@@ -159,14 +159,14 @@ data class TicketStats(
     val refundAmount: Double = 0.0
 ) {
     fun checkInRate(): Float {
-        return if (soldTickets > 0) (checkedInTickets.toFloat() / soldTickets) * 100 else 0f
+        return if (reservedTickets > 0) (checkedInTickets.toFloat() / reservedTickets) * 100 else 0f
     }
     
     fun salesRate(): Float {
-        return if (totalTickets > 0) (soldTickets.toFloat() / totalTickets) * 100 else 0f
+        return if (totalTickets > 0) (reservedTickets.toFloat() / totalTickets) * 100 else 0f
     }
     
     fun refundRate(): Float {
-        return if (soldTickets > 0) (refundedTickets.toFloat() / soldTickets) * 100 else 0f
+        return if (reservedTickets > 0) (refundedTickets.toFloat() / reservedTickets) * 100 else 0f
     }
 }

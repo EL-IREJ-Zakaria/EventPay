@@ -32,7 +32,7 @@ class UserRepository(private val userDao: UserDao) {
     }
 
     suspend fun updateWalletBalance(userId: String, balance: Double) {
-        userDao.updateWalletBalance(userId, balance)
+        // Wallet functionality removed - no-op
     }
 
     suspend fun deleteUser(user: User) {

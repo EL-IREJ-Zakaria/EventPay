@@ -97,13 +97,13 @@ class FirestoreEventRepository {
     }
     
     // Update sold tickets count
-    suspend fun incrementSoldTickets(eventId: String, count: Int = 1): Result<Unit> {
+    suspend fun incrementreservedTickets(eventId: String, count: Int = 1): Result<Unit> {
         return try {
             val eventDoc = eventsCollection.document(eventId)
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(eventDoc)
-                val currentSold = snapshot.getLong("soldTickets") ?: 0
-                transaction.update(eventDoc, "soldTickets", currentSold + count)
+                val currentSold = snapshot.getLong("reservedTickets") ?: 0
+                transaction.update(eventDoc, "reservedTickets", currentSold + count)
             }.await()
             Result.success(Unit)
         } catch (e: Exception) {
@@ -179,11 +179,11 @@ class FirestoreEventRepository {
             val eventDoc = eventsCollection.document(eventId)
             firestore.runTransaction { transaction ->
                 val snapshot = transaction.get(eventDoc)
-                val currentSold = snapshot.getLong("soldTickets") ?: 0
-                val currentVipSold = snapshot.getLong("vipSold") ?: 0
+                val currentSold = snapshot.getLong("reservedTickets") ?: 0
+                val currentvipReserved = snapshot.getLong("vipReserved") ?: 0
                 transaction.update(eventDoc, mapOf(
-                    "soldTickets" to currentSold + ticketsSold,
-                    "vipSold" to currentVipSold + vipTicketsSold
+                    "reservedTickets" to currentSold + ticketsSold,
+                    "vipReserved" to currentvipReserved + vipTicketsSold
                 ))
             }.await()
             Result.success(Unit)

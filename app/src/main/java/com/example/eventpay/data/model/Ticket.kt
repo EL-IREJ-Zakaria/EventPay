@@ -30,40 +30,24 @@ data class Ticket(
     val userId: String = "",
     val qrCode: String = "",
     val ticketType: TicketType = TicketType.STANDARD,
-    val price: Double = 0.0,
     val isCheckedIn: Boolean = false,
     val checkedInAt: Long? = null,
-    val purchaseDate: Long = System.currentTimeMillis(),
-    // Enhanced fields for professional ticket management
+    val reservationDate: Long = System.currentTimeMillis(),
     val seatNumber: String? = null,
-    val section: String? = null,
-    val row: String? = null,
-    val attendeeName: String? = null,
-    val attendeeEmail: String? = null,
-    val attendeePhone: String? = null,
     val status: TicketStatus = TicketStatus.ACTIVE,
     val notes: String? = null,
-    val issuedBy: String? = null, // Cashier/Organizer who issued the ticket
-    val lastModified: Long = System.currentTimeMillis(),
-    val checkedInBy: String? = null,
-    val deviceId: String? = null
+    val checkedInBy: String? = null
 )
 
 enum class TicketType {
     STANDARD,
     VIP,
-    PREMIUM,
-    EARLY_BIRD,
-    STUDENT,
-    GROUP,
-    PASS
+    EARLY_BIRD
 }
 
 enum class TicketStatus {
     ACTIVE,
     USED,
     EXPIRED,
-    CANCELLED,
-    REFUNDED,
-    PENDING
+    CANCELLED
 }

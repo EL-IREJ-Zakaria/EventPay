@@ -199,10 +199,10 @@ class AnalyticsViewModel(
         val vipTickets = tickets.filter { it.ticketType == com.example.eventpay.data.model.TicketType.VIP }
         val standardTickets = tickets.filter { it.ticketType == com.example.eventpay.data.model.TicketType.STANDARD }
         
-        val vipRevenue = vipTickets.sumOf { it.price }
-        val standardRevenue = standardTickets.sumOf { it.price }
-        val averageTicketPrice = if (totalTicketsSold > 0) totalRevenue / totalTicketsSold else 0.0
-        val revenuePerAttendee = if (checkedInCount > 0) totalRevenue / checkedInCount else 0.0
+        val vipRevenue = 0.0 // All tickets are free
+        val standardRevenue = 0.0 // All tickets are free
+        val averageTicketPrice = 0.0 // All tickets are free
+        val revenuePerAttendee = 0.0 // All tickets are free
         
         // Real-time metrics
         val now = System.currentTimeMillis()
@@ -361,11 +361,7 @@ class AnalyticsViewModel(
     private fun DataTicketType.toDomain(): TicketType = when (this) {
         DataTicketType.STANDARD -> TicketType.STANDARD
         DataTicketType.VIP -> TicketType.VIP
-        DataTicketType.PREMIUM -> TicketType.PREMIUM
         DataTicketType.EARLY_BIRD -> TicketType.EARLY_BIRD
-        DataTicketType.STUDENT -> TicketType.STUDENT
-        DataTicketType.GROUP -> TicketType.GROUP
-        DataTicketType.PASS -> TicketType.PASS
     }
     
     /**
@@ -389,8 +385,8 @@ class AnalyticsViewModel(
         return tickets.groupBy { it.ticketType }.mapKeys { (type, _) -> type.toDomain() }.mapValues { (_, typeTickets) ->
             val sold = typeTickets.size
             val checkedIn = typeTickets.count { it.isCheckedIn }
-            val revenue = typeTickets.sumOf { it.price }
-            val averagePrice = if (sold > 0) revenue / sold else 0.0
+            val revenue = 0.0 // All tickets are free
+            val averagePrice = 0.0 // All tickets are free
             val checkInRate = if (sold > 0) (checkedIn.toDouble() / sold) * 100 else 0.0
             
             TicketTypeStats(

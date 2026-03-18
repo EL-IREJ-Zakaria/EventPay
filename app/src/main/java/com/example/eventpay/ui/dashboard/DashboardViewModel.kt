@@ -95,7 +95,7 @@ class DashboardViewModel(
                 }
                 
                 // Sort events by sold tickets to get top events
-                val sortedEvents = events.sortedByDescending { it.soldTickets }.take(5)
+                val sortedEvents = events.sortedByDescending { it.reservedTickets }.take(5)
                 
                 _state.value = _state.value.copy(
                     stats = _state.value.stats.copy(

@@ -42,12 +42,12 @@ class CreateEventUseCase @Inject constructor(
             location = location,
             date = date,
             endDate = endDate,
-            ticketPrice = ticketPrice,
+            /* ticket/* price = */ //  */ //  ticketPrice,
             totalTickets = totalTickets,
             organizerId = organizerId,
             category = category,
             imageUrl = imageUrl,
-            vipPrice = vipPrice,
+            /* vip/* price = */ //  */ //  vipPrice,
             vipTickets = vipTickets,
             status = EventStatus.DRAFT,
             createdAt = System.currentTimeMillis()
@@ -92,8 +92,8 @@ class UpdateEventUseCase @Inject constructor(
         }
         
         // Cannot reduce total tickets below sold count
-        if (event.totalTickets < existingEvent.soldTickets) {
-            return Result.failure(Exception("Cannot reduce total tickets below sold count (${existingEvent.soldTickets})"))
+        if (event.totalTickets < existingEvent.reservedTickets) {
+            return Result.failure(Exception("Cannot reduce total tickets below sold count (${existingEvent.reservedTickets})"))
         }
         
         return eventRepository.updateEvent(event)
@@ -117,7 +117,7 @@ class DeleteEventUseCase @Inject constructor(
             ?: return Result.failure(Exception("Event not found"))
         
         // If event has sold tickets, cancel instead of delete
-        if (event.soldTickets > 0) {
+        if (event.reservedTickets > 0) {
             val cancelledEvent = event.copy(status = EventStatus.CANCELLED)
             return eventRepository.updateEvent(cancelledEvent)
         }

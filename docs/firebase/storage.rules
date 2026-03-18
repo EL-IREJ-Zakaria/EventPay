@@ -1,86 +1,106 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    
     // ═══════════════════════════════════════════════════════════════
     // HELPER FUNCTIONS
     // ═══════════════════════════════════════════════════════════════
     
-    // Check if user is authenticated
     function isAuthenticated() {
       return request.auth != null;
     }
     
-    // Check if current user is an ADMIN
     function isAdmin() {
       return isAuthenticated() && 
-        firestore.get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
+        firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'ADMIN';
     }
     
-    // Check if user owns the document
     function isOwner(userId) {
       return isAuthenticated() && request.auth.uid == userId;
     }
     
-    // ═══════════════════════════════════════════════════════════════
-    // DEFAULT READ ACCESS
-    // ═══════════════════════════════════════════════════════════════
-    match /{allPaths=**} {
-      allow read: if isAuthenticated();
+    function isValidImageSize(maxSizeMB) {
+      return request.resource.size < maxSizeMB * 1024 * 1024;
+    }
+    
+    function isImageFile() {
+      return request.resource.contentType.matches('image/.*');
     }
     
     // ═══════════════════════════════════════════════════════════════
     // EVENT IMAGES
-    // Only admins can upload event images
     // ═══════════════════════════════════════════════════════════════
     match /event-images/{imageId} {
-      allow write: if isAuthenticated() 
-        && isAdmin()
-        && request.resource.size < 5 * 1024 * 1024  // 5MB limit
-        && request.resource.contentType.matches('image/.*');
+      allow read: if isAuthenticated();
       
-      allow delete: if isAuthenticated() && isAdmin();
+      allow write: if isAdmin()
+        && isValidImageSize(5)
+        && isImageFile();
+      
+      allow delete: if isAdmin();
     }
     
     // ═══════════════════════════════════════════════════════════════
     // USER PROFILE IMAGES
-    // Users can upload their own profile images
     // ═══════════════════════════════════════════════════════════════
     match /user-profiles/{userId}/{imageId} {
-      allow write: if isAuthenticated() 
-        && isOwner(userId)
-        && request.resource.size < 2 * 1024 * 1024  // 2MB limit
-        && request.resource.contentType.matches('image/.*');
+      allow read: if isAuthenticated();
       
-      allow delete: if isAuthenticated() && (isOwner(userId) || isAdmin());
+      allow write: if isOwner(userId)
+        && isValidImageSize(2)
+        && isImageFile();
+      
+      allow delete: if isOwner(userId) || isAdmin();
     }
     
     // ═══════════════════════════════════════════════════════════════
     // TICKET QR CODES
-    // Users can upload their ticket QR codes
     // ═══════════════════════════════════════════════════════════════
     match /ticket-qr-codes/{userId}/{ticketId} {
-      allow write: if isAuthenticated() 
-        && (isOwner(userId) || isAdmin())
-        && request.resource.size < 1 * 1024 * 1024  // 1MB limit
-        && request.resource.contentType.matches('image/.*');
-      
       allow read: if isAuthenticated();
-      allow delete: if isAuthenticated() && isAdmin();
+      
+      allow write: if (isOwner(userId) || isAdmin())
+        && isValidImageSize(1)
+        && isImageFile();
+      
+      allow delete: if isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // RECEIPTS
+    // ═══════════════════════════════════════════════════════════════
+    match /receipts/{userId}/{receiptId} {
+      allow read: if isOwner(userId) || isAdmin();
+      
+      allow write: if (isOwner(userId) || isAdmin())
+        && isValidImageSize(2);
+      
+      allow delete: if isAdmin();
     }
     
     // ═══════════════════════════════════════════════════════════════
     // BACKUP FILES (Admin only)
     // ═══════════════════════════════════════════════════════════════
     match /backups/{filename} {
-      allow write: if isAuthenticated() && isAdmin();
-      allow read: if isAuthenticated() && isAdmin();
-      allow delete: if isAuthenticated() && isAdmin();
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // ═══════════════════════════════════════════════════════════════
+    // REPORTS (Admin only)
+    // ═══════════════════════════════════════════════════════════════
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+      allow delete: if isAdmin();
     }
     
     // ═══════════════════════════════════════════════════════════════
     // DEFAULT DENY
     // ═══════════════════════════════════════════════════════════════
     match /{document=**} {
+      allow read: if isAuthenticated();
       allow write: if false;
     }
   }

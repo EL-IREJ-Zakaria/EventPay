@@ -150,10 +150,10 @@ class EventRepositoryImpl @Inject constructor(
         vipTicketsSold: Int
     ): Result<Unit> {
         return try {
-            eventDao.updateTicketSales(eventId, ticketsSold, vipTicketsSold)
+            eventDao.updateTicketReservations(eventId, ticketsSold, vipTicketsSold)
             
             if (networkUtils.isOnline()) {
-                firestoreEventRepository.updateTicketSales(eventId, ticketsSold, vipTicketsSold)
+                firestoreEventRepository.incrementreservedTickets(eventId)
             }
             
             Result.success(Unit)

@@ -3,6 +3,7 @@ package com.example.eventpay.ui.screens
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,85 +39,79 @@ fun DashboardScreen(
     viewModel: DashboardViewModel = viewModel()
 ) {
     val state by viewModel.state.collectAsState()
-    var visible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadDashboardData()
-        visible = true
-    }
+    LaunchedEffect(Unit) { viewModel.loadDashboardData() }
 
     Box(modifier = Modifier.fillMaxSize().background(BackgroundLight)) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 40.dp)
+            contentPadding = PaddingValues(bottom = 48.dp)
         ) {
             item {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .background(
-                            Brush.verticalGradient(listOf(GradientStart, GradientMid, PrimaryDark))
+                            Brush.linearGradient(
+                                colorStops = arrayOf(
+                                    0f to Color(0xFF1A0A3D),
+                                    0.5f to GradientStart,
+                                    1f to GradientMid
+                                )
+                            )
                         )
-                        .statusBarsPadding()
-                        .padding(bottom = 32.dp)
+                        .padding(bottom = 48.dp)
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 12.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            onClick = onNavigateBack,
+                    Column {
+                        Row(
                             modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color.White.copy(alpha = 0.15f))
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                Icons.Default.ArrowBack,
-                                contentDescription = "Back",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.15f))
+                                    .clickable { onNavigateBack() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
+                            Spacer(modifier = Modifier.weight(1f))
+                            Text(
+                                "Analytics",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color.White
                             )
+                            Spacer(modifier = Modifier.weight(1f))
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(Color.White.copy(alpha = 0.15f))
+                                    .clickable { viewModel.refreshData() },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = Color.White, modifier = Modifier.size(18.dp))
+                            }
                         }
-                        Spacer(modifier = Modifier.weight(1f))
-                        Text(
-                            "Analytics",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.ExtraBold,
-                            color = Color.White
-                        )
-                        Spacer(modifier = Modifier.weight(1f))
-                        IconButton(
-                            onClick = { viewModel.refreshData() },
-                            modifier = Modifier
-                                .size(44.dp)
-                                .clip(RoundedCornerShape(14.dp))
-                                .background(Color.White.copy(alpha = 0.15f))
-                        ) {
-                            Icon(
-                                Icons.Default.Refresh,
-                                contentDescription = "Refresh",
-                                tint = Color.White,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
 
-                    DashAnimatedEntrance(visible = visible, delay = 0) {
+                        Spacer(modifier = Modifier.height(16.dp))
+
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(horizontal = 24.dp)
-                                .padding(top = 8.dp),
+                                .padding(horizontal = 24.dp),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             Text(
                                 "Total Revenue",
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = Color.White.copy(alpha = 0.75f),
-                                fontWeight = FontWeight.Medium
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = Color.White.copy(alpha = 0.65f),
+                                letterSpacing = 0.5.sp
                             )
                             Spacer(modifier = Modifier.height(6.dp))
                             Text(
@@ -124,32 +119,10 @@ fun DashboardScreen(
                                 style = MaterialTheme.typography.displaySmall,
                                 fontWeight = FontWeight.ExtraBold,
                                 color = Color.White,
-                                letterSpacing = 0.5.sp
+                                letterSpacing = (-0.5).sp
                             )
-                            Spacer(modifier = Modifier.height(6.dp))
-                            Surface(
-                                shape = RoundedCornerShape(20.dp),
-                                color = Color.White.copy(alpha = 0.18f)
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 5.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.TrendingUp,
-                                        null,
-                                        tint = TertiaryLight,
-                                        modifier = Modifier.size(14.dp)
-                                    )
-                                    Text(
-                                        "All time earnings",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = Color.White.copy(alpha = 0.85f),
-                                        fontWeight = FontWeight.Medium
-                                    )
-                                }
-                            }
+                            Spacer(modifier = Modifier.height(8.dp))
+                            StatusBadge(label = "Live", color = Tertiary)
                         }
                     }
                 }
@@ -157,194 +130,111 @@ fun DashboardScreen(
 
             if (state.isLoading) {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(64.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator(color = Primary, strokeWidth = 3.dp)
+                    Box(modifier = Modifier.fillMaxWidth().padding(80.dp), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator(color = Primary, strokeWidth = 2.5.dp, modifier = Modifier.size(36.dp))
                     }
                 }
             } else {
                 item {
-                    DashAnimatedEntrance(visible = visible, delay = 150) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .offset(y = (-20).dp)
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.spacedBy(14.dp)
-                        ) {
-                            DashStatCard(
-                                modifier = Modifier.weight(1f),
-                                title = "Tickets Sold",
-                                value = "${state.stats.totalTicketsSold}",
-                                icon = Icons.Outlined.ConfirmationNumber,
-                                color = Secondary
-                            )
-                            DashStatCard(
-                                modifier = Modifier.weight(1f),
-                                title = "Active Events",
-                                value = "${state.stats.totalEvents}",
-                                icon = Icons.Outlined.Event,
-                                color = Tertiary
-                            )
-                        }
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .offset(y = (-28).dp)
+                            .padding(horizontal = 20.dp),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        PremiumStatTile(
+                            modifier = Modifier.weight(1f),
+                            label = "Tickets Sold",
+                            value = "${state.stats.totalTicketsSold}",
+                            icon = Icons.Outlined.ConfirmationNumber,
+                            gradient = listOf(Secondary, AuroraCyan)
+                        )
+                        PremiumStatTile(
+                            modifier = Modifier.weight(1f),
+                            label = "Active Events",
+                            value = "${state.stats.totalEvents}",
+                            icon = Icons.Outlined.Event,
+                            gradient = listOf(Tertiary, TertiaryDark)
+                        )
                     }
                 }
 
                 item {
-                    DashAnimatedEntrance(visible = visible, delay = 250) {
-                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                            DashSectionHeader(title = "Today's Performance")
-                            Spacer(modifier = Modifier.height(14.dp))
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .shadow(
-                                        elevation = 4.dp,
-                                        shape = RoundedCornerShape(20.dp),
-                                        ambientColor = Primary.copy(0.06f)
-                                    ),
-                                shape = RoundedCornerShape(20.dp),
-                                color = MaterialTheme.colorScheme.surface
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = 20.dp)
+                            .offset(y = (-12).dp)
+                    ) {
+                        SectionHeader(title = "Today's Performance", modifier = Modifier.padding(bottom = 12.dp))
+
+                        SaaSCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceEvenly,
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(24.dp),
-                                    horizontalArrangement = Arrangement.SpaceEvenly,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    DashPerformanceItem(
-                                        "New Tickets",
-                                        "${state.stats.todayTickets}",
-                                        Primary,
-                                        Icons.Outlined.ConfirmationNumber
-                                    )
-                                    Box(
-                                        modifier = Modifier
-                                            .height(50.dp)
-                                            .width(1.dp)
-                                            .background(OutlineVariantLight)
-                                    )
-                                    DashPerformanceItem(
-                                        "Today Revenue",
-                                        "${String.format("%.0f", state.stats.todayRevenue)} MAD",
-                                        Tertiary,
-                                        Icons.Default.TrendingUp
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item { Spacer(modifier = Modifier.height(8.dp)) }
-
-                item {
-                    DashAnimatedEntrance(visible = visible, delay = 350) {
-                        Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                            DashSectionHeader(title = "Revenue Breakdown")
-                            Spacer(modifier = Modifier.height(14.dp))
-                            Surface(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .shadow(
-                                        elevation = 4.dp,
-                                        shape = RoundedCornerShape(20.dp),
-                                        ambientColor = Primary.copy(0.06f)
-                                    ),
-                                shape = RoundedCornerShape(20.dp),
-                                color = MaterialTheme.colorScheme.surface
-                            ) {
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(24.dp),
-                                    verticalArrangement = Arrangement.spacedBy(20.dp)
-                                ) {
-                                    val maxRev = maxOf(
-                                        state.revenueBreakdown.cashRevenue,
-                                        state.revenueBreakdown.cardRevenue,
-                                        state.revenueBreakdown.mobileRevenue,
-                                        state.revenueBreakdown.walletRevenue,
-                                        1.0
-                                    )
-                                    DashRevenueBar(
-                                        "Cash",
-                                        state.revenueBreakdown.cashRevenue,
-                                        maxRev,
-                                        Tertiary,
-                                        Icons.Outlined.Payments
-                                    )
-                                    DashRevenueBar(
-                                        "Card",
-                                        state.revenueBreakdown.cardRevenue,
-                                        maxRev,
-                                        Primary,
-                                        Icons.Outlined.CreditCard
-                                    )
-                                    DashRevenueBar(
-                                        "Mobile",
-                                        state.revenueBreakdown.mobileRevenue,
-                                        maxRev,
-                                        Secondary,
-                                        Icons.Outlined.PhoneAndroid
-                                    )
-                                    DashRevenueBar(
-                                        "Wallet",
-                                        state.revenueBreakdown.walletRevenue,
-                                        maxRev,
-                                        Accent,
-                                        Icons.Outlined.AccountBalanceWallet
-                                    )
-                                }
-                            }
-                        }
-                    }
-                }
-
-                item { Spacer(modifier = Modifier.height(8.dp)) }
-
-                item {
-                    DashAnimatedEntrance(visible = visible, delay = 450) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 20.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                "Recent Transactions",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.ExtraBold,
-                                color = OnBackgroundLight
-                            )
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = PrimaryContainer
-                            ) {
-                                Text(
-                                    "See All",
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    style = MaterialTheme.typography.labelMedium,
+                                TodayPerformanceItem(
+                                    label = "New Tickets",
+                                    value = "${state.stats.todayTickets}",
                                     color = Primary,
-                                    fontWeight = FontWeight.Bold
+                                    icon = Icons.Outlined.ConfirmationNumber
+                                )
+                                Box(
+                                    modifier = Modifier
+                                        .height(48.dp)
+                                        .width(1.dp)
+                                        .background(Zinc100)
+                                )
+                                TodayPerformanceItem(
+                                    label = "Revenue",
+                                    value = "${String.format("%.0f", state.stats.todayRevenue)} MAD",
+                                    color = Tertiary,
+                                    icon = Icons.Default.TrendingUp
                                 )
                             }
                         }
                     }
                 }
 
+                item { Spacer(modifier = Modifier.height(8.dp)) }
+
+                item {
+                    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                        SectionHeader(title = "Revenue by Method", modifier = Modifier.padding(bottom = 12.dp))
+
+                        SaaSCard {
+                            Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                                val maxRev = maxOf(
+                                    state.revenueBreakdown.cashRevenue,
+                                    state.revenueBreakdown.cardRevenue,
+                                    state.revenueBreakdown.mobileRevenue,
+                                    state.revenueBreakdown.walletRevenue,
+                                    1.0
+                                )
+                                RevenueBar("Cash", state.revenueBreakdown.cashRevenue, maxRev, Tertiary, Icons.Outlined.Payments)
+                                RevenueBar("Card", state.revenueBreakdown.cardRevenue, maxRev, Primary, Icons.Outlined.CreditCard)
+                                RevenueBar("Mobile", state.revenueBreakdown.mobileRevenue, maxRev, Secondary, Icons.Outlined.PhoneAndroid)
+                                RevenueBar("Wallet", state.revenueBreakdown.walletRevenue, maxRev, Accent, Icons.Outlined.AccountBalanceWallet)
+                            }
+                        }
+                    }
+                }
+
+                item { Spacer(modifier = Modifier.height(24.dp)) }
+
+                item {
+                    SectionHeader(
+                        title = "Recent Transactions",
+                        onAction = {},
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 4.dp)
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 items(state.recentTransactions.take(5)) { transaction ->
-                    DashAnimatedEntrance(visible = visible, delay = 550) {
-                        DashTransactionCard(
-                            transaction = transaction,
-                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp)
-                        )
+                    Box(modifier = Modifier.padding(horizontal = 20.dp, vertical = 5.dp)) {
+                        RecentTransactionCard(transaction)
                     }
                 }
             }
@@ -353,81 +243,7 @@ fun DashboardScreen(
 }
 
 @Composable
-private fun DashSectionHeader(title: String) {
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleLarge,
-        fontWeight = FontWeight.ExtraBold,
-        color = OnBackgroundLight
-    )
-}
-
-@Composable
-private fun DashAnimatedEntrance(
-    visible: Boolean,
-    delay: Int,
-    content: @Composable () -> Unit
-) {
-    AnimatedVisibility(
-        visible = visible,
-        enter = fadeIn(tween(500, delayMillis = delay)) +
-                slideInVertically(tween(500, delayMillis = delay)) { it / 3 }
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun DashStatCard(
-    modifier: Modifier = Modifier,
-    title: String,
-    value: String,
-    icon: ImageVector,
-    color: Color
-) {
-    Surface(
-        modifier = modifier
-            .shadow(
-                elevation = 6.dp,
-                shape = RoundedCornerShape(20.dp),
-                ambientColor = color.copy(0.1f),
-                spotColor = color.copy(0.15f)
-            ),
-        shape = RoundedCornerShape(20.dp),
-        color = MaterialTheme.colorScheme.surface
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(18.dp)
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(color.copy(alpha = 0.12f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(icon, null, tint = color, modifier = Modifier.size(22.dp))
-            }
-            Spacer(modifier = Modifier.height(14.dp))
-            Text(
-                text = value,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = OnBackgroundLight
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.labelMedium,
-                color = OnSurfaceVariantLight
-            )
-        }
-    }
-}
-
-@Composable
-private fun DashPerformanceItem(
+private fun TodayPerformanceItem(
     label: String,
     value: String,
     color: Color,
@@ -436,37 +252,33 @@ private fun DashPerformanceItem(
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Box(
             modifier = Modifier
-                .size(44.dp)
-                .clip(RoundedCornerShape(14.dp))
+                .size(36.dp)
+                .clip(CircleShape)
                 .background(color.copy(alpha = 0.12f)),
             contentAlignment = Alignment.Center
         ) {
-            Icon(icon, null, tint = color, modifier = Modifier.size(22.dp))
+            Icon(icon, null, tint = color, modifier = Modifier.size(16.dp))
         }
-        Spacer(modifier = Modifier.height(10.dp))
-        Text(
-            text = value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = color
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelSmall,
-            color = OnSurfaceVariantLight
-        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Zinc900)
+        Text(label, style = MaterialTheme.typography.labelMedium, color = Zinc500)
     }
 }
 
 @Composable
-private fun DashRevenueBar(
+private fun RevenueBar(
     label: String,
-    amount: Double,
-    maxAmount: Double,
+    value: Double,
+    max: Double,
     color: Color,
     icon: ImageVector
 ) {
-    val progress = (amount / maxAmount).coerceIn(0.0, 1.0).toFloat()
+    val progress = (value / max).toFloat().coerceIn(0.04f, 1f)
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = tween(1000, easing = FastOutSlowInEasing),
+        label = "revenueBar"
+    )
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Row(
@@ -474,110 +286,104 @@ private fun DashRevenueBar(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Box(
                     modifier = Modifier
                         .size(30.dp)
-                        .clip(RoundedCornerShape(9.dp))
+                        .clip(CircleShape)
                         .background(color.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(icon, null, tint = color, modifier = Modifier.size(16.dp))
+                    Icon(icon, null, tint = color, modifier = Modifier.size(14.dp))
                 }
-                Text(
-                    label,
-                    style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = OnBackgroundLight
-                )
+                Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium, color = Zinc700)
             }
             Text(
-                "${String.format("%.2f", amount)} MAD",
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.ExtraBold,
-                color = color
+                "${String.format("%.0f", value)} MAD",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold,
+                color = Zinc900
             )
         }
-        LinearProgressIndicator(
-            progress = { progress },
+
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(7.dp)
-                .clip(RoundedCornerShape(4.dp)),
-            color = color,
-            trackColor = color.copy(alpha = 0.1f)
-        )
+                .clip(CircleShape)
+                .background(Zinc100)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth(animatedProgress)
+                    .fillMaxHeight()
+                    .clip(CircleShape)
+                    .background(
+                        Brush.horizontalGradient(listOf(color, color.copy(alpha = 0.6f)))
+                    )
+            )
+        }
     }
 }
 
 @Composable
-private fun DashTransactionCard(
-    transaction: com.example.eventpay.data.model.Transaction,
-    modifier: Modifier = Modifier
-) {
-    val isCredit = transaction.amount >= 0
-    val iconBg = if (isCredit) TertiaryContainer else ErrorContainer
-    val iconTint = if (isCredit) Tertiary else Error
-    val amountColor = if (isCredit) Tertiary else Error
+private fun RecentTransactionCard(transaction: com.example.eventpay.data.model.Transaction) {
+    val sdf = SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault())
 
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .shadow(
-                elevation = 2.dp,
-                shape = RoundedCornerShape(16.dp),
-                ambientColor = Color.Black.copy(0.04f)
-            ),
-        shape = RoundedCornerShape(16.dp),
-        color = MaterialTheme.colorScheme.surface
-    ) {
+    SaaSCard(padding = 14.dp, cornerRadius = 16.dp) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
                     .size(44.dp)
-                    .clip(RoundedCornerShape(14.dp))
-                    .background(iconBg),
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(
+                        Brush.linearGradient(listOf(GradientStart, AuroraBlue))
+                    ),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    if (isCredit) Icons.Default.ArrowDownward else Icons.Default.ArrowUpward,
-                    null,
-                    tint = iconTint,
+                    imageVector = Icons.Default.ReceiptLong,
+                    contentDescription = null,
+                    tint = Color.White,
                     modifier = Modifier.size(20.dp)
                 )
             }
+
             Spacer(modifier = Modifier.width(14.dp))
+
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = transaction.description,
+                    transaction.description.ifEmpty { "Transaction" },
                     style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold,
-                    color = OnBackgroundLight,
+                    color = Zinc900,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = SimpleDateFormat("dd MMM · HH:mm", Locale.getDefault())
-                        .format(Date(transaction.createdAt)),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = OnSurfaceVariantLight
+                    sdf.format(Date(transaction.timestamp)),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Zinc400
                 )
             }
-            Text(
-                text = "${if (isCredit) "+" else ""}${String.format("%.2f", transaction.amount)} MAD",
-                style = MaterialTheme.typography.titleSmall,
-                fontWeight = FontWeight.ExtraBold,
-                color = amountColor
-            )
+
+            Column(horizontalAlignment = Alignment.End) {
+                Text(
+                    "${String.format("%.2f", transaction.amount)} MAD",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (transaction.amount > 0) Tertiary else Error
+                )
+                Spacer(modifier = Modifier.height(3.dp))
+                StatusBadge(
+                    label = if (transaction.amount > 0) "Credit" else "Debit",
+                    color = if (transaction.amount > 0) Tertiary else Error
+                )
+            }
         }
     }
 }

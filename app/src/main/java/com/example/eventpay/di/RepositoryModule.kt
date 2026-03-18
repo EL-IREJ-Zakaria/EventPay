@@ -3,14 +3,12 @@ package com.example.eventpay.di
 import com.example.eventpay.data.local.AppDatabase
 import com.example.eventpay.data.local.dao.EventDao
 import com.example.eventpay.data.local.dao.TicketDao
-import com.example.eventpay.data.local.dao.TransactionDao
 import com.example.eventpay.data.local.dao.UserDao
 import com.example.eventpay.data.firebase.FirestoreEventRepository
 import com.example.eventpay.data.firebase.FirestoreTicketRepository
 import com.example.eventpay.data.firebase.FirestoreTransactionRepository
 import com.example.eventpay.data.repository.EventRepositoryImpl
 import com.example.eventpay.data.repository.TicketRepository
-import com.example.eventpay.data.repository.TransactionRepository
 import com.example.eventpay.data.repository.UserRepository
 import com.example.eventpay.util.NetworkUtils
 import com.google.firebase.auth.FirebaseAuth
@@ -32,10 +30,6 @@ object DatabaseModule {
     
     fun provideTicketDao(database: AppDatabase): TicketDao {
         return database.ticketDao()
-    }
-    
-    fun provideTransactionDao(database: AppDatabase): TransactionDao {
-        return database.transactionDao()
     }
     
     fun provideUserDao(database: AppDatabase): UserDao {
@@ -80,12 +74,6 @@ object RepositoryModule {
         ticketDao: TicketDao
     ): TicketRepository {
         return TicketRepository(ticketDao)
-    }
-    
-    fun provideTransactionRepository(
-        transactionDao: TransactionDao
-    ): TransactionRepository {
-        return TransactionRepository(transactionDao)
     }
     
     fun provideUserRepository(

@@ -226,7 +226,7 @@ fun QRScannerScreen(
                     }
                 }
 
-                Spacer(modifier = Modifier.navigationBarsPadding().height(16.dp))
+                Spacer(modifier = Modifier.height(16.dp))
             }
         }
     }
@@ -247,7 +247,6 @@ private fun ScannerTopBar(
                     listOf(Color.Black.copy(alpha = 0.7f), Color.Transparent)
                 )
             )
-            .statusBarsPadding()
             .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(
@@ -575,7 +574,7 @@ private fun ScanSuccessCard(
         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
             ScanInfoRow("Event", eventName, Icons.Outlined.Event)
             ScanInfoRow("Ticket Type", ticket.ticketType.name, Icons.Outlined.ConfirmationNumber)
-            ScanInfoRow("Price", "${ticket.price} MAD", Icons.Outlined.AttachMoney)
+            ScanInfoRow("Price", "Free", Icons.Outlined.AttachMoney)
             ScanInfoRow("ID", ticket.qrCode.take(16) + "...", Icons.Outlined.QrCode)
         }
 

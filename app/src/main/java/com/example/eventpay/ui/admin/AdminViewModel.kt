@@ -6,9 +6,12 @@ import com.example.eventpay.data.firebase.CheckInRecord
 import com.example.eventpay.data.firebase.DashboardStats
 import com.example.eventpay.data.firebase.FirebaseService
 import com.example.eventpay.data.firebase.FirestoreEventRepository
+import com.example.eventpay.data.firebase.FirestoreTicketRepository
+import com.example.eventpay.data.model.Ticket
 import com.example.eventpay.data.model.User
 import com.example.eventpay.data.model.UserRole
 import com.example.eventpay.domain.model.Event
+import com.example.eventpay.ui.screens.admin.ParticipantInfo
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -20,13 +23,17 @@ data class AdminUiState(
     val events: List<Event> = emptyList(),
     val scanners: List<User> = emptyList(),
     val checkIns: List<CheckInRecord> = emptyList(),
+    val participants: List<ParticipantInfo> = emptyList(),
+    val participantsLoading: Boolean = false,
+    val selectedEventId: String? = null,
     val error: String? = null,
     val successMessage: String? = null
 )
 
 class AdminViewModel(
     private val firebaseService: FirebaseService,
-    private val eventRepository: FirestoreEventRepository
+    private val eventRepository: FirestoreEventRepository,
+    private val ticketRepository: FirestoreTicketRepository = FirestoreTicketRepository()
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(AdminUiState())
@@ -325,6 +332,80 @@ class AdminViewModel(
                 },
                 onFailure = { error ->
                     _uiState.value = _uiState.value.copy(error = error.message)
+                }
+            )
+        }
+    }
+
+    fun loadParticipants(eventId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(participantsLoading = true, selectedEventId = eventId)
+            ticketRepository.getTicketsByEvent(eventId).fold(
+                onSuccess = { tickets ->
+                    val userIds = tickets.map { it.userId }.distinct()
+                    val usersResult = firebaseService.getUsersByIds(userIds)
+                    val usersMap = usersResult.getOrElse { emptyList() }.associateBy { it.id }
+
+                    val participants = tickets.map { ticket ->
+                        val user = usersMap[ticket.userId]
+                        ParticipantInfo(
+                            ticketId = ticket.id,
+                            userId = ticket.userId,
+                            fullName = user?.fullName ?: "Participant ${ticket.userId.take(6)}",
+                            email = user?.email ?: "",
+                            ticketType = ticket.ticketType,
+                            status = ticket.status,
+                            checkedIn = ticket.isCheckedIn,
+                            checkedInAt = ticket.checkedInAt,
+                            registrationDate = ticket.reservationDate
+                        )
+                    }
+                    _uiState.value = _uiState.value.copy(
+                        participants = participants,
+                        participantsLoading = false
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        participantsLoading = false,
+                        error = error.message ?: "Failed to load participants"
+                    )
+                }
+            )
+        }
+    }
+
+    fun addManualParticipant(
+        eventId: String,
+        name: String,
+        email: String,
+        phone: String,
+        ticketType: com.example.eventpay.data.model.TicketType,
+        adminId: String
+    ) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+            firebaseService.createManualParticipant(
+                eventId = eventId,
+                name = name,
+                email = email,
+                phone = phone,
+                ticketType = ticketType,
+                adminId = adminId
+            ).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Participant $name added successfully"
+                    )
+                    loadParticipants(eventId)
+                    loadDashboard()
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Failed to add participant"
+                    )
                 }
             )
         }

@@ -11,7 +11,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.*
 import androidx.compose.material.icons.Icons
@@ -20,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Offset
@@ -31,329 +29,231 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import com.example.eventpay.ui.theme.*
+import androidx.compose.foundation.BorderStroke
 
-/**
- * A modern glassmorphic card with gradient borders and subtle shadows.
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// GlassCard — Frosted Glass morphism card
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
-    containerColor: Color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    cornerRadius: Dp = 24.dp,
-    borderWidth: Dp = 1.dp,
-    showBorder: Boolean = true,
+    cornerRadius: Dp = 20.dp,
+    borderColor: Color = Color.White.copy(alpha = 0.25f),
+    backgroundColor: Color = Color.White.copy(alpha = 0.12f),
+    padding: Dp = 20.dp,
     content: @Composable ColumnScope.() -> Unit
 ) {
-    Surface(
+    Box(
         modifier = modifier
-            .shadow(
-                elevation = 12.dp,
-                shape = RoundedCornerShape(cornerRadius),
-                ambientColor = Primary.copy(alpha = 0.15f),
-                spotColor = Primary.copy(alpha = 0.25f)
-            ),
-        shape = RoundedCornerShape(cornerRadius),
-        color = containerColor,
-        contentColor = contentColor
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(backgroundColor)
+            .border(1.dp, borderColor, RoundedCornerShape(cornerRadius))
     ) {
-        Column(
-            modifier = Modifier
-                .then(
-                    if (showBorder) {
-                        Modifier.border(
-                            width = borderWidth,
-                            brush = Brush.linearGradient(
-                                colors = listOf(
-                                    Color.White.copy(alpha = 0.5f),
-                                    Color.White.copy(alpha = 0.1f),
-                                    Primary.copy(alpha = 0.1f)
-                                )
-                            ),
-                            shape = RoundedCornerShape(cornerRadius)
-                        )
-                    } else Modifier
-                )
-                .padding(20.dp),
-            content = content
-        )
+        Column(modifier = Modifier.padding(padding), content = content)
     }
 }
 
-/**
- * Premium Button with Gradient Background and Scale Animation
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// SaaSCard — Primary card used across all screens
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun PremiumButton(
+fun SaaSCard(
+    modifier: Modifier = Modifier,
+    containerColor: Color = MaterialTheme.colorScheme.surface,
+    contentColor: Color = MaterialTheme.colorScheme.onSurface,
+    cornerRadius: Dp = 20.dp,
+    borderWidth: Dp = 1.dp,
+    showBorder: Boolean = true,
+    elevation: Dp = 0.dp,
+    padding: Dp = 20.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val shadowColor = Primary.copy(alpha = 0.08f)
+    Surface(
+        modifier = modifier
+            .then(
+                if (elevation > 0.dp) Modifier.shadow(
+                    elevation = elevation,
+                    shape = RoundedCornerShape(cornerRadius),
+                    spotColor = shadowColor,
+                    ambientColor = shadowColor
+                ) else Modifier
+            ),
+        shape = RoundedCornerShape(cornerRadius),
+        color = containerColor,
+        contentColor = contentColor,
+        border = if (showBorder) BorderStroke(borderWidth, MaterialTheme.colorScheme.outlineVariant) else null
+    ) {
+        Column(modifier = Modifier.padding(padding), content = content)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// GradientCard — Card with vivid gradient header stripe
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun GradientCard(
+    modifier: Modifier = Modifier,
+    gradient: List<Color> = listOf(GradientStart, GradientMid),
+    cornerRadius: Dp = 20.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Box(
+        modifier = modifier
+            .shadow(4.dp, RoundedCornerShape(cornerRadius), spotColor = Primary.copy(alpha = 0.15f))
+            .clip(RoundedCornerShape(cornerRadius))
+            .background(Brush.linearGradient(gradient))
+    ) {
+        Column(modifier = Modifier.padding(20.dp), content = content)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SaaSButton — Primary action button with press feedback
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun SaaSButton(
     onClick: () -> Unit,
     text: String,
     modifier: Modifier = Modifier,
     icon: ImageVector? = null,
-    gradient: Brush = Brush.linearGradient(listOf(Primary, Secondary)),
-    enabled: Boolean = true
+    containerColor: Color = Primary,
+    contentColor: Color = Color.White,
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.96f else 1f,
-        label = "buttonScale"
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "btnScale"
     )
 
-    Button(
-        onClick = onClick,
+    Box(
         modifier = modifier
-            .height(56.dp)
+            .height(54.dp)
             .graphicsLayer(scaleX = scale, scaleY = scale)
-            .shadow(
-                elevation = if (isPressed) 2.dp else 8.dp,
-                shape = RoundedCornerShape(16.dp),
-                spotColor = Primary.copy(alpha = 0.4f)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (enabled && !loading)
+                    Brush.linearGradient(listOf(containerColor, containerColor.copy(alpha = 0.85f)))
+                else
+                    Brush.linearGradient(listOf(Zinc200, Zinc300))
+            )
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled && !loading,
+                onClick = onClick
             ),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.LightGray.copy(alpha = 0.3f)
-        ),
-        contentPadding = PaddingValues(0.dp),
-        shape = RoundedCornerShape(16.dp),
-        enabled = enabled,
-        interactionSource = interactionSource
+        contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(if (enabled) gradient else Brush.linearGradient(listOf(Color.Gray, Color.LightGray)))
-                .padding(horizontal = 24.dp),
-            contentAlignment = Alignment.Center
-        ) {
+        if (loading) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(22.dp),
+                color = contentColor,
+                strokeWidth = 2.5.dp
+            )
+        } else {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 28.dp)
             ) {
                 if (icon != null) {
-                    Icon(icon, contentDescription = null, tint = Color.White)
-                    Spacer(modifier = Modifier.width(10.dp))
+                    Icon(icon, contentDescription = null, tint = if (enabled) contentColor else Zinc400, modifier = Modifier.size(18.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                 }
                 Text(
                     text = text,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White,
-                    letterSpacing = 0.5.sp
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (enabled) contentColor else Zinc400,
+                    letterSpacing = 0.2.sp
                 )
             }
         }
     }
 }
 
-/**
- * Modern Search Bar with integrated filters
- */
+// ─────────────────────────────────────────────────────────────────────────────
+// AnimatedGradientButton — Shimmer-sweep gradient CTA
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun ModernSearchBar(
-    value: String,
-    onValueChange: (String) -> Unit,
-    onFilterClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    placeholder: String = "Explore events..."
-) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .height(56.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            .padding(horizontal = 16.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Icon(
-            imageVector = androidx.compose.material.icons.Icons.Default.Search,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        TextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.weight(1f),
-            placeholder = { Text(placeholder, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)) },
-            colors = TextFieldDefaults.colors(
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
-                focusedIndicatorColor = Color.Transparent,
-                unfocusedIndicatorColor = Color.Transparent,
-                disabledIndicatorColor = Color.Transparent
-            ),
-            singleLine = true
-        )
-        IconButton(
-            onClick = onFilterClick,
-            modifier = Modifier
-                .size(40.dp)
-                .background(Primary.copy(alpha = 0.1f), RoundedCornerShape(12.dp))
-        ) {
-            Icon(
-                imageVector = androidx.compose.material.icons.Icons.Default.FilterList,
-                contentDescription = "Filters",
-                tint = Primary
-            )
-        }
-    }
-}
-
-/**
- * Animated Category Chip
- */
-@Composable
-fun CategoryChip(
-    label: String,
-    isSelected: Boolean,
+fun AnimatedGradientButton(
     onClick: () -> Unit,
-    color: Color = Primary
+    text: String,
+    modifier: Modifier = Modifier,
+    icon: ImageVector? = null,
+    enabled: Boolean = true,
+    loading: Boolean = false
 ) {
-    val backgroundColor by animateColorAsState(
-        targetValue = if (isSelected) color else color.copy(alpha = 0.1f),
-        label = "backgroundColor"
+    val interactionSource = remember { MutableInteractionSource() }
+    val isPressed by interactionSource.collectIsPressedAsState()
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.97f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "agbScale"
     )
-    val textColor by animateColorAsState(
-        targetValue = if (isSelected) Color.White else color,
-        label = "textColor"
+
+    val shimmerTransition = rememberInfiniteTransition(label = "shimmer")
+    val shimmerX by shimmerTransition.animateFloat(
+        initialValue = -600f, targetValue = 1200f,
+        animationSpec = infiniteRepeatable(tween(2400, easing = LinearEasing)),
+        label = "shimmerX"
     )
 
-    Surface(
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .clip(RoundedCornerShape(12.dp)),
-        color = backgroundColor,
-        shape = RoundedCornerShape(12.dp)
-    ) {
-        Text(
-            text = label,
-            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-            color = textColor
-        )
-    }
-}
-
-/**
- * Modern Event Card with Glass Overlays
- */
-@Composable
-fun ModernEventCard(
-    title: String,
-    location: String,
-    date: String,
-    price: String,
-    imageUrl: String?,
-    category: String,
-    onClick: () -> Unit
-) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(280.dp)
-            .clickable(onClick = onClick),
-        shape = RoundedCornerShape(24.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Box(modifier = Modifier.fillMaxSize()) {
-            // Background Image
-            AsyncImage(
-                model = imageUrl,
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+    Box(
+        modifier = modifier
+            .height(54.dp)
+            .graphicsLayer(scaleX = scale, scaleY = scale)
+            .clip(RoundedCornerShape(14.dp))
+            .background(
+                if (enabled)
+                    Brush.linearGradient(
+                        colors = listOf(PrimaryDark, Primary, AuroraViolet, Primary, PrimaryDark),
+                        start = Offset(shimmerX, 0f),
+                        end = Offset(shimmerX + 600f, 0f)
+                    )
+                else
+                    Brush.linearGradient(listOf(Zinc200, Zinc300))
             )
-
-            // Gradient Overlay for readability
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        Brush.verticalGradient(
-                            colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.7f)),
-                            startY = 400f
-                        )
-                    )
-            )
-
-            // Category Badge
-            Box(
-                modifier = Modifier
-                    .padding(16.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(Color.White.copy(alpha = 0.9f))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .align(Alignment.TopEnd)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                enabled = enabled && !loading,
+                onClick = onClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (loading) {
+            CircularProgressIndicator(modifier = Modifier.size(22.dp), color = Color.White, strokeWidth = 2.5.dp)
+        } else {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier.padding(horizontal = 28.dp)
             ) {
-                Text(
-                    text = category,
-                    style = MaterialTheme.typography.labelSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = Primary
-                )
-            }
-
-            // Info Section
-            Column(
-                modifier = Modifier
-                    .align(Alignment.BottomStart)
-                    .padding(16.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleLarge,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = Color.White
-                )
-                Row(
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        imageVector = androidx.compose.material.icons.Icons.Default.LocationOn,
-                        contentDescription = null,
-                        tint = Color.White.copy(alpha = 0.7f),
-                        modifier = Modifier.size(14.dp)
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = location,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Color.White.copy(alpha = 0.7f)
-                    )
+                if (icon != null) {
+                    Icon(icon, null, tint = Color.White, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(8.dp))
                 }
-                Spacer(modifier = Modifier.height(8.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.Bottom
-                ) {
-                    Text(
-                        text = date,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = Color.White
-                    )
-                    Text(
-                        text = price,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = TertiaryLight
-                    )
-                }
+                Text(text, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = Color.White, letterSpacing = 0.3.sp)
             }
         }
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PremiumTextField — Labeled field with focus ring
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun PremiumTextField(
     value: String,
@@ -370,212 +270,304 @@ fun PremiumTextField(
     enabled: Boolean = true
 ) {
     Column(modifier = modifier) {
-        val focusState = remember { mutableStateOf(false) }
-        val borderColor by animateColorAsState(
-            targetValue = when {
-                isError -> Error
-                focusState.value -> Primary
-                else -> OutlineLight
-            },
-            label = "borderColor"
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = if (isError) Error else Zinc600,
+            modifier = Modifier.padding(bottom = 6.dp)
         )
 
-        Column {
+        OutlinedTextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.fillMaxWidth(),
+            leadingIcon = leadingIcon?.let {
+                {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = null,
+                        modifier = Modifier.size(20.dp),
+                        tint = if (isError) Error else Zinc400
+                    )
+                }
+            },
+            trailingIcon = trailingIcon?.let {
+                {
+                    IconButton(onClick = { onTrailingIconClick?.invoke() }) {
+                        Icon(imageVector = it, contentDescription = null, modifier = Modifier.size(20.dp), tint = Zinc400)
+                    }
+                }
+            },
+            visualTransformation = visualTransformation,
+            keyboardOptions = keyboardOptions,
+            enabled = enabled,
+            isError = isError,
+            shape = RoundedCornerShape(14.dp),
+            textStyle = MaterialTheme.typography.bodyLarge,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Primary,
+                unfocusedBorderColor = Zinc200,
+                errorBorderColor = Error,
+                focusedContainerColor = PrimaryContainer.copy(alpha = 0.3f),
+                unfocusedContainerColor = Zinc50,
+                focusedTextColor = Zinc900,
+                unfocusedTextColor = Zinc900,
+                focusedLeadingIconColor = Primary,
+                unfocusedLeadingIconColor = Zinc400,
+                cursorColor = Primary
+            )
+        )
+
+        if (isError && errorMessage != null) {
             Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = if (isError) Error else MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 8.dp)
+                text = errorMessage,
+                style = MaterialTheme.typography.bodySmall,
+                color = Error,
+                modifier = Modifier.padding(top = 4.dp, start = 4.dp)
             )
-
-            OutlinedTextField(
-                value = value,
-                onValueChange = onValueChange,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
-                leadingIcon = leadingIcon?.let {
-                    {
-                        Icon(
-                            imageVector = it,
-                            contentDescription = null,
-                            tint = if (focusState.value) Primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                trailingIcon = trailingIcon?.let {
-                    {
-                        IconButton(onClick = { onTrailingIconClick?.invoke() }) {
-                            Icon(
-                                imageVector = it,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
-                    }
-                },
-                visualTransformation = visualTransformation,
-                keyboardOptions = keyboardOptions,
-                enabled = enabled,
-                isError = isError,
-                shape = RoundedCornerShape(16.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = Primary,
-                    unfocusedBorderColor = OutlineLight,
-                    errorBorderColor = Error,
-                    focusedContainerColor = SurfaceVariantLight.copy(alpha = 0.3f),
-                    unfocusedContainerColor = SurfaceVariantLight.copy(alpha = 0.3f)
-                )
-            )
-
-            if (isError && errorMessage != null) {
-                Text(
-                    text = errorMessage,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Error,
-                    modifier = Modifier.padding(top = 4.dp, start = 16.dp)
-                )
-            }
         }
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// ModernSearchBar — Floating glass search
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun AnimatedGradientButton(
-    onClick: () -> Unit,
-    text: String,
+fun ModernSearchBar(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onFilterClick: () -> Unit,
     modifier: Modifier = Modifier,
-    icon: ImageVector? = null,
-    enabled: Boolean = true,
-    isLoading: Boolean = false
+    placeholder: String = "Search..."
 ) {
-    val infiniteTransition = rememberInfiniteTransition(label = "gradient")
-    val offset by infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(3000, easing = LinearEasing),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "offset"
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(52.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .background(Color.White.copy(alpha = 0.18f))
+            .border(1.dp, Color.White.copy(alpha = 0.3f), RoundedCornerShape(14.dp))
+            .padding(horizontal = 16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(imageVector = Icons.Default.Search, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+        Spacer(modifier = Modifier.width(12.dp))
+        TextField(
+            value = value,
+            onValueChange = onValueChange,
+            modifier = Modifier.weight(1f),
+            placeholder = {
+                Text(
+                    placeholder,
+                    color = Color.White.copy(alpha = 0.55f),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            colors = TextFieldDefaults.colors(
+                focusedTextColor = Color.White,
+                unfocusedTextColor = Color.White,
+                focusedContainerColor = Color.Transparent,
+                unfocusedContainerColor = Color.Transparent,
+                focusedIndicatorColor = Color.Transparent,
+                unfocusedIndicatorColor = Color.Transparent,
+                disabledIndicatorColor = Color.Transparent,
+                cursorColor = Color.White
+            ),
+            singleLine = true,
+            textStyle = MaterialTheme.typography.bodyMedium
+        )
+        Box(
+            modifier = Modifier
+                .size(34.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(Color.White.copy(alpha = 0.2f))
+                .clickable(onClick = onFilterClick),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(imageVector = Icons.Default.FilterList, contentDescription = "Filters", tint = Color.White, modifier = Modifier.size(16.dp))
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CategoryChip — Animated selection chip
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun CategoryChip(
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    color: Color = Primary
+) {
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isSelected) color else Zinc100,
+        animationSpec = tween(200),
+        label = "chipBg"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) Color.White else Zinc600,
+        animationSpec = tween(200),
+        label = "chipText"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected) color else Zinc200,
+        animationSpec = tween(200),
+        label = "chipBorder"
     )
 
+    Box(
+        modifier = Modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(backgroundColor)
+            .border(1.dp, borderColor, RoundedCornerShape(12.dp))
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
+            color = textColor
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ModernEventCard — Premium event card with image + info
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun ModernEventCard(
+    title: String,
+    location: String,
+    date: String,
+    price: String,
+    imageUrl: String?,
+    category: String,
+    onClick: () -> Unit
+) {
     val interactionSource = remember { MutableInteractionSource() }
     val isPressed by interactionSource.collectIsPressedAsState()
     val scale by animateFloatAsState(
-        targetValue = if (isPressed) 0.95f else 1f,
-        label = "scale"
+        targetValue = if (isPressed) 0.98f else 1f,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+        label = "cardScale"
     )
 
-    Button(
-        onClick = onClick,
-        modifier = modifier
+    Box(
+        modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
             .graphicsLayer(scaleX = scale, scaleY = scale)
-            .shadow(
-                elevation = if (isPressed) 4.dp else 16.dp,
-                shape = RoundedCornerShape(16.dp),
-                spotColor = Primary.copy(alpha = 0.5f)
-            ),
-        enabled = enabled && !isLoading,
-        shape = RoundedCornerShape(16.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = Color.Transparent,
-            disabledContainerColor = Color.Gray
-        ),
-        contentPadding = PaddingValues(0.dp),
-        interactionSource = interactionSource
+            .shadow(6.dp, RoundedCornerShape(20.dp), spotColor = Primary.copy(alpha = 0.1f))
+            .clip(RoundedCornerShape(20.dp))
+            .background(Color.White)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (enabled && !isLoading) {
-                        Brush.linearGradient(
-                            colors = listOf(GradientStart, GradientMid, GradientEnd),
-                            start = Offset(offset, offset),
-                            end = Offset(offset + 500f, offset + 500f)
-                        )
-                    } else {
-                        Brush.linearGradient(listOf(Color.Gray, Color.DarkGray))
-                    }
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            if (isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(24.dp),
-                    color = Color.White,
-                    strokeWidth = 2.dp
-                )
-            } else {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    if (icon != null) {
-                        Icon(
-                            imageVector = icon,
-                            contentDescription = null,
-                            tint = Color.White,
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                    }
-                    Text(
-                        text = text,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
+        Column {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(170.dp)
+            ) {
+                if (imageUrl != null) {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = null,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
+                } else {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(
+                                Brush.linearGradient(listOf(GradientStart, GradientMid, AuroraCyan))
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Default.Event, null, tint = Color.White.copy(0.4f), modifier = Modifier.size(56.dp))
+                    }
+                }
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.4f)),
+                                startY = 80f
+                            )
+                        )
+                )
+
+                Row(
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(12.dp)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(Primary)
+                            .padding(horizontal = 10.dp, vertical = 5.dp)
+                    ) {
+                        Text(
+                            text = category,
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Zinc900,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(imageVector = Icons.Default.LocationOn, contentDescription = null, tint = Zinc400, modifier = Modifier.size(13.dp))
+                    Spacer(modifier = Modifier.width(3.dp))
+                    Text(text = location, style = MaterialTheme.typography.bodySmall, color = Zinc500, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                Spacer(modifier = Modifier.height(14.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(imageVector = Icons.Default.CalendarToday, contentDescription = null, tint = Zinc400, modifier = Modifier.size(12.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(text = date, style = MaterialTheme.typography.labelMedium, color = Zinc500)
+                    }
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(PrimaryContainer)
+                            .padding(horizontal = 10.dp, vertical = 4.dp)
+                    ) {
+                        Text(text = price, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = Primary)
+                    }
                 }
             }
         }
     }
 }
 
-@Composable
-fun FloatingGlassCard(
-    modifier: Modifier = Modifier,
-    onClick: (() -> Unit)? = null,
-    content: @Composable () -> Unit
-) {
-    val clickableModifier = onClick?.let { Modifier.clickable(onClick = it) } ?: Modifier
-
-    Surface(
-        modifier = modifier
-            .then(clickableModifier)
-            .shadow(
-                elevation = 20.dp,
-                shape = RoundedCornerShape(24.dp),
-                ambientColor = Primary.copy(alpha = 0.1f),
-                spotColor = Primary.copy(alpha = 0.3f)
-            ),
-        shape = RoundedCornerShape(24.dp),
-        color = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-    ) {
-        Box(
-            modifier = Modifier
-                .border(
-                    width = 1.dp,
-                    brush = Brush.linearGradient(
-                        colors = listOf(
-                            Color.White.copy(alpha = 0.6f),
-                            Color.White.copy(alpha = 0.1f),
-                            Primary.copy(alpha = 0.15f)
-                        )
-                    ),
-                    shape = RoundedCornerShape(24.dp)
-                )
-                .padding(24.dp)
-        ) {
-            content()
-        }
-    }
-}
-
+// ─────────────────────────────────────────────────────────────────────────────
+// StatsCard — Metric card with icon + animated value
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
 fun StatsCard(
     title: String,
@@ -583,92 +575,242 @@ fun StatsCard(
     subtitle: String,
     icon: ImageVector,
     modifier: Modifier = Modifier,
-    containerColor: Color = Primary,
-    contentColor: Color = Color.White
+    containerColor: Color = Primary
 ) {
-    Surface(
-        modifier = modifier,
-        shape = RoundedCornerShape(20.dp),
-        color = containerColor.copy(alpha = 0.1f)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+    SaaSCard(modifier = modifier, elevation = 0.dp, cornerRadius = 20.dp) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Box(
                 modifier = Modifier
-                    .size(56.dp)
+                    .size(50.dp)
                     .clip(RoundedCornerShape(14.dp))
-                    .background(
-                        Brush.linearGradient(
-                            colors = listOf(containerColor, containerColor.copy(alpha = 0.7f))
-                        )
-                    ),
+                    .background(containerColor.copy(alpha = 0.12f)),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = Color.White,
-                    modifier = Modifier.size(28.dp)
-                )
+                Icon(imageVector = icon, contentDescription = null, tint = containerColor, modifier = Modifier.size(24.dp))
             }
-
-            Spacer(modifier = Modifier.width(16.dp))
-
+            Spacer(modifier = Modifier.width(14.dp))
             Column {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = value,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.ExtraBold,
-                    color = containerColor
-                )
-                Text(
-                    text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
-                )
+                Text(text = title, style = MaterialTheme.typography.labelMedium, color = Zinc500, fontWeight = FontWeight.Medium)
+                Text(text = value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = Zinc900)
+                if (subtitle.isNotEmpty()) {
+                    Text(text = subtitle, style = MaterialTheme.typography.bodySmall, color = Zinc400)
+                }
             }
         }
     }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PremiumStatTile — Gradient stat tile
+// ─────────────────────────────────────────────────────────────────────────────
 @Composable
-fun ShimmerEffect(
-    modifier: Modifier = Modifier
+fun PremiumStatTile(
+    modifier: Modifier = Modifier,
+    label: String,
+    value: String,
+    icon: ImageVector,
+    gradient: List<Color> = listOf(GradientStart, AuroraBlue)
 ) {
-    val shimmerColors = listOf(
-        ShimmerLight.copy(alpha = 0.3f),
-        ShimmerHighlight.copy(alpha = 0.5f),
-        ShimmerLight.copy(alpha = 0.3f)
-    )
-
-    val transition = rememberInfiniteTransition(label = "shimmer")
-    val translateAnim by transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1000f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(1200, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "translateAnim"
-    )
-
     Box(
         modifier = modifier
-            .background(
-                brush = Brush.linearGradient(
-                    colors = shimmerColors,
-                    start = Offset(translateAnim - 1000f, translateAnim - 1000f),
-                    end = Offset(translateAnim, translateAnim)
-                )
+            .shadow(4.dp, RoundedCornerShape(18.dp), spotColor = gradient.first().copy(0.2f))
+            .clip(RoundedCornerShape(18.dp))
+            .background(Brush.linearGradient(gradient))
+            .padding(18.dp)
+    ) {
+        Column {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(Color.White.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(icon, null, tint = Color.White, modifier = Modifier.size(20.dp))
+            }
+            Spacer(modifier = Modifier.height(14.dp))
+            Text(text = value, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.ExtraBold, color = Color.White)
+            Text(text = label, style = MaterialTheme.typography.labelMedium, color = Color.White.copy(0.75f))
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FloatingGlassCard
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun FloatingGlassCard(
+    modifier: Modifier = Modifier,
+    cornerRadius: Dp = 20.dp,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Surface(
+        modifier = modifier.shadow(
+            elevation = 12.dp,
+            shape = RoundedCornerShape(cornerRadius),
+            spotColor = Primary.copy(alpha = 0.12f),
+            ambientColor = Primary.copy(alpha = 0.06f)
+        ),
+        shape = RoundedCornerShape(cornerRadius),
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    ) {
+        Column(modifier = Modifier.padding(24.dp), content = content)
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ShimmerEffect — Loading placeholder
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun ShimmerEffect(modifier: Modifier = Modifier) {
+    val transition = rememberInfiniteTransition(label = "shimmer")
+    val translateX by transition.animateFloat(
+        initialValue = -600f, targetValue = 1200f,
+        animationSpec = infiniteRepeatable(tween(1400, easing = LinearEasing)),
+        label = "shimmerX"
+    )
+    Box(
+        modifier = modifier.background(
+            Brush.linearGradient(
+                colors = listOf(Zinc100, Zinc200, Zinc100),
+                start = Offset(translateX, 0f),
+                end = Offset(translateX + 600f, 0f)
             )
+        )
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AnimatedLoadingDots — Bouncing loading indicator
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun AnimatedLoadingDots(
+    modifier: Modifier = Modifier,
+    color: Color = Color.White
+) {
+    val infiniteTransition = rememberInfiniteTransition(label = "dots")
+    val dot1 by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -12f,
+        animationSpec = infiniteRepeatable(tween(500, easing = FastOutSlowInEasing), RepeatMode.Reverse, initialStartOffset = StartOffset(0)),
+        label = "d1"
+    )
+    val dot2 by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -12f,
+        animationSpec = infiniteRepeatable(tween(500, easing = FastOutSlowInEasing), RepeatMode.Reverse, initialStartOffset = StartOffset(150)),
+        label = "d2"
+    )
+    val dot3 by infiniteTransition.animateFloat(
+        initialValue = 0f, targetValue = -12f,
+        animationSpec = infiniteRepeatable(tween(500, easing = FastOutSlowInEasing), RepeatMode.Reverse, initialStartOffset = StartOffset(300)),
+        label = "d3"
+    )
+
+    Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        listOf(dot1, dot2, dot3).forEach { offset ->
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .graphicsLayer(translationY = offset)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AvatarBadge — User avatar with initial letter
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun AvatarBadge(
+    name: String,
+    size: Dp = 44.dp,
+    gradient: List<Color> = listOf(AuroraViolet, AuroraBlue),
+    textColor: Color = Color.White
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(Brush.linearGradient(gradient)),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = name.take(1).uppercase(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = textColor
+        )
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// StatusBadge — Pill-shaped status indicator
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun StatusBadge(
+    label: String,
+    color: Color = StatusActive,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(100.dp))
+            .background(color.copy(alpha = 0.12f))
+            .padding(horizontal = 10.dp, vertical = 4.dp)
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(modifier = Modifier.size(6.dp).clip(CircleShape).background(color))
+            Spacer(Modifier.width(5.dp))
+            Text(label, style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = color)
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SectionHeader — Screen section title + action link
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun SectionHeader(
+    title: String,
+    actionLabel: String = "See All",
+    onAction: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = Zinc900
+        )
+        if (onAction != null) {
+            Text(
+                text = actionLabel,
+                style = MaterialTheme.typography.labelLarge,
+                color = Primary,
+                fontWeight = FontWeight.SemiBold,
+                modifier = Modifier.clickable { onAction() }
+            )
+        }
+    }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// VersionTag — Bottom splash version label
+// ─────────────────────────────────────────────────────────────────────────────
+@Composable
+fun VersionTag(modifier: Modifier = Modifier) {
+    Text(
+        text = "v1.0.0 · EventPay",
+        style = MaterialTheme.typography.labelSmall,
+        color = Color.White.copy(alpha = 0.4f),
+        textAlign = TextAlign.Center,
+        modifier = modifier.padding(bottom = 40.dp)
     )
 }

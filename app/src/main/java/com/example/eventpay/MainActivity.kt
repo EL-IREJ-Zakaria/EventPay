@@ -3,6 +3,7 @@ package com.example.eventpay
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.core.view.WindowCompat
 import androidx.compose.runtime.*
 import com.example.eventpay.data.model.UserRole
 import com.example.eventpay.di.AppContainer
@@ -11,6 +12,7 @@ import com.example.eventpay.ui.screens.*
 import com.example.eventpay.ui.screens.admin.AdminEventListScreen
 import com.example.eventpay.ui.screens.admin.AdminHomeScreen
 import com.example.eventpay.ui.screens.admin.AdminUserManagementScreen
+import com.example.eventpay.ui.screens.admin.ParticipantsScreen
 import com.example.eventpay.ui.screens.scanner.ScannerHomeScreen
 import com.example.eventpay.ui.theme.EventPayTheme
 
@@ -38,6 +40,7 @@ sealed class Screen {
     object AdminHome : Screen()
     object AdminEvents : Screen()
     object AdminUsers : Screen()
+    data class AdminParticipants(val eventId: String) : Screen()
 
     object ScannerHome : Screen()
 }
@@ -115,7 +118,40 @@ fun EventPayApp(container: AppContainer) {
                 AdminEventListScreen(
                     adminViewModel = container.adminViewModel,
                     currentUserId = user.id,
-                    onBack = { currentScreen = Screen.AdminHome }
+                    onBack = { currentScreen = Screen.AdminHome },
+                    onViewParticipants = { eventId ->
+                        currentScreen = Screen.AdminParticipants(eventId)
+                    }
+                )
+            }
+        }
+
+        is Screen.AdminParticipants -> {
+            val screen = currentScreen as Screen.AdminParticipants
+            val uiState by container.adminViewModel.uiState.collectAsState()
+            val event = uiState.events.find { it.id == screen.eventId }
+            if (event != null) {
+                LaunchedEffect(screen.eventId) {
+                    container.adminViewModel.loadParticipants(screen.eventId)
+                }
+                ParticipantsScreen(
+                    event = event,
+                    participants = uiState.participants,
+                    isLoading = uiState.participantsLoading,
+                    onBack = { currentScreen = Screen.AdminEvents },
+                    onAddParticipant = { name, email, phone, ticketType ->
+                        authState.currentUser?.let { user ->
+                            container.adminViewModel.addManualParticipant(
+                                eventId = screen.eventId,
+                                name = name,
+                                email = email,
+                                phone = phone,
+                                ticketType = com.example.eventpay.data.model.TicketType.valueOf(ticketType.name),
+                                adminId = user.id
+                            )
+                        }
+                    },
+                    onRefresh = { container.adminViewModel.loadParticipants(screen.eventId) }
                 )
             }
         }

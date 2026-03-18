@@ -165,7 +165,7 @@ class QRCodeValidator @Inject constructor(
                         ticket.status == TicketStatus.CANCELLED -> TicketScanResult.InvalidTicket(
                             reason = "Ticket has been cancelled"
                         )
-                        ticket.status == TicketStatus.REFUNDED -> TicketScanResult.InvalidTicket(
+                        ticket.status == /* TicketStatus.REFUNDED */ TicketStatus.CANCELLED -> TicketScanResult.InvalidTicket(
                             reason = "Ticket has been refunded"
                         )
                         ticket.status == TicketStatus.EXPIRED -> TicketScanResult.InvalidTicket(

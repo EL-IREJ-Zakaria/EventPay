@@ -11,6 +11,7 @@ import com.example.eventpay.data.repository.TicketRepository
 import com.example.eventpay.data.repository.TransactionRepository
 import com.example.eventpay.data.repository.UserRepository
 import com.example.eventpay.domain.qrcode.QRCodeGenerator
+import com.example.eventpay.security.BiometricAuthManager
 import com.example.eventpay.security.QRCryptoManager
 import com.example.eventpay.ui.admin.AdminViewModel
 import com.example.eventpay.ui.auth.AuthViewModel
@@ -19,22 +20,19 @@ import com.example.eventpay.ui.dashboard.DashboardViewModel
 import com.example.eventpay.ui.event.EventViewModel
 import com.example.eventpay.ui.qrcode.QRCodeViewModel
 import com.example.eventpay.ui.scanner.ScannerViewModel
-import com.example.eventpay.ui.wallet.WalletViewModel
 
-class AppContainer(context: Context) {
+class AppContainer(private val context: Context) {
     private val database = AppDatabase.getDatabase(context)
 
     // DAOs
     private val userDao = database.userDao()
     private val eventDao = database.eventDao()
     private val ticketDao = database.ticketDao()
-    private val transactionDao = database.transactionDao()
 
     // Local Repositories
     val userRepository = UserRepository(userDao)
     val eventRepository = EventRepository(eventDao)
     val ticketRepository = TicketRepository(ticketDao)
-    val transactionRepository = TransactionRepository(transactionDao)
     
     // Firebase Services
     val firebaseService = FirebaseService()
@@ -42,16 +40,16 @@ class AppContainer(context: Context) {
     val firestoreTicketRepository = FirestoreTicketRepository()
     val firestoreTransactionRepository = FirestoreTransactionRepository()
     
-    // QR Code
+    // Security
     private val qrCryptoManager = QRCryptoManager()
     val qrCodeGenerator = QRCodeGenerator(qrCryptoManager)
+    val biometricAuthManager = BiometricAuthManager(context)
 
     // ViewModels
-    val authViewModel = AuthViewModel(userRepository, firebaseService)
+    val authViewModel = AuthViewModel(userRepository, firebaseService, biometricAuthManager)
     val eventViewModel = EventViewModel(
         eventRepository,
         ticketRepository,
-        transactionRepository,
         userRepository,
         firestoreEventRepository,
         firestoreTicketRepository,
@@ -62,13 +60,7 @@ class AppContainer(context: Context) {
         eventRepository,
         firestoreTicketRepository
     )
-    val walletViewModel = WalletViewModel(
-        userRepository, 
-        transactionRepository,
-        firebaseService,
-        firestoreTransactionRepository
-    )
-    val cashierViewModel = CashierViewModel(
+val cashierViewModel = CashierViewModel(
         firestoreEventRepository,
         firestoreTicketRepository,
         firestoreTransactionRepository,

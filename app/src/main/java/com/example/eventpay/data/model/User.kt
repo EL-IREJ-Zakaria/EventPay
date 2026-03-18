@@ -11,7 +11,6 @@ data class User(
     val fullName: String = "",
     val password: String = "",
     val role: UserRole = UserRole.SCANNER,
-    val walletBalance: Double = 0.0,
     val createdAt: Long = 0L,
     val phone: String? = null,
     val profileImageUrl: String? = null,
@@ -26,7 +25,9 @@ data class UserPreferences(
     val notificationsEnabled: Boolean = true,
     val emailNotifications: Boolean = true,
     val darkMode: Boolean = false,
-    val language: String = "en"
+    val language: String = "en",
+    val dateFormat: String = "MM/dd/yyyy",
+    val timeFormat: String = "12h"
 )
 
 enum class UserRole {

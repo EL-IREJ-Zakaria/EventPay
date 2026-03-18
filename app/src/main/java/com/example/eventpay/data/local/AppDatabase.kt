@@ -16,7 +16,7 @@ import com.example.eventpay.data.model.User
 
 @Database(
     entities = [User::class, Event::class, Ticket::class, Transaction::class],
-    version = 4,
+    version = 6,
     exportSchema = false
 )
 @TypeConverters(Converters::class)

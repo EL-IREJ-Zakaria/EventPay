@@ -1,11 +1,14 @@
 package com.example.eventpay.ui.auth
 
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.eventpay.data.firebase.FirebaseService
 import com.example.eventpay.data.model.User
 import com.example.eventpay.data.model.UserRole
 import com.example.eventpay.data.repository.UserRepository
+import com.example.eventpay.security.BiometricAuthManager
+import com.example.eventpay.security.BiometricResult
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -16,12 +19,14 @@ data class AuthState(
     val isLoggedIn: Boolean = false,
     val currentUser: User? = null,
     val error: String? = null,
-    val isInitialized: Boolean = false
+    val isInitialized: Boolean = false,
+    val biometricAvailable: Boolean = false
 )
 
 class AuthViewModel(
     private val userRepository: UserRepository,
-    private val firebaseService: FirebaseService
+    private val firebaseService: FirebaseService,
+    private val biometricAuthManager: BiometricAuthManager? = null
 ) : ViewModel() {
 
     private val _authState = MutableStateFlow(AuthState())
@@ -29,6 +34,12 @@ class AuthViewModel(
 
     init {
         observeAuthState()
+        checkBiometricAvailability()
+    }
+
+    private fun checkBiometricAvailability() {
+        val available = biometricAuthManager?.isBiometricAvailable() ?: false
+        _authState.value = _authState.value.copy(biometricAvailable = available)
     }
 
     private fun observeAuthState() {
@@ -139,4 +150,35 @@ class AuthViewModel(
     fun canScanQR(): Boolean = true
     fun canViewReports(): Boolean = isAdmin()
     fun canManageUsers(): Boolean = isAdmin()
+
+    fun loginWithBiometric(
+        activity: FragmentActivity,
+        onSuccess: () -> Unit,
+        onError: (String) -> Unit
+    ) {
+        val manager = biometricAuthManager
+        if (manager == null || !manager.isBiometricAvailable()) {
+            onError("Biometric authentication not available")
+            return
+        }
+        if (firebaseService.getCurrentUserId() == null) {
+            onError("Please sign in with email first to enable biometric login")
+            return
+        }
+        manager.authenticate(
+            activity = activity,
+            title = "EventPay Biometric Login",
+            subtitle = "Sign in to EventPay",
+            description = "Touch the fingerprint sensor or look at the camera",
+            negativeButtonText = "Use Password",
+            onResult = { result ->
+                when (result) {
+                    is BiometricResult.Success -> onSuccess()
+                    is BiometricResult.Error -> onError(result.message)
+                    BiometricResult.Failed -> onError("Biometric authentication failed")
+                    BiometricResult.Cancelled -> { }
+                }
+            }
+        )
+    }
 }

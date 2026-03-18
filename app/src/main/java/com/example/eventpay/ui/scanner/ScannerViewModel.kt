@@ -134,7 +134,7 @@ class ScannerViewModel(
                         isLoading = false,
                         scanStatus = ScanStatus.SUCCESS,
                         lastScannedTicketId = checkInResult.ticket.id,
-                        lastScannedName = checkInResult.ticket.attendeeName,
+                        lastScannedName = checkInResult.ticket.userId, // Use userId instead of attendeeName
                         sessionCheckInCount = _uiState.value.sessionCheckInCount + 1,
                         error = null
                     )
@@ -143,7 +143,7 @@ class ScannerViewModel(
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         scanStatus = ScanStatus.ALREADY_SCANNED,
-                        lastScannedName = checkInResult.ticket.attendeeName,
+                        lastScannedName = checkInResult.ticket.userId, // Use userId instead of attendeeName
                         error = "Ticket already checked in"
                     )
                 }

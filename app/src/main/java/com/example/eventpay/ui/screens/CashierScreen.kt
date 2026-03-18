@@ -72,11 +72,22 @@ fun CashierScreen(
                     .fillMaxWidth()
                     .background(
                         if (state.isShiftActive)
-                            Brush.verticalGradient(listOf(Tertiary, TertiaryDark))
+                            Brush.linearGradient(
+                                colorStops = arrayOf(
+                                    0f to Color(0xFF065F46),
+                                    0.5f to Tertiary,
+                                    1f to TertiaryDark
+                                )
+                            )
                         else
-                            Brush.verticalGradient(listOf(GradientStart, GradientMid))
+                            Brush.linearGradient(
+                                colorStops = arrayOf(
+                                    0f to Color(0xFF1A0A3D),
+                                    0.5f to GradientStart,
+                                    1f to GradientMid
+                                )
+                            )
                     )
-                    .statusBarsPadding()
                     .padding(bottom = 20.dp)
             ) {
                 Row(
@@ -275,7 +286,7 @@ fun CashierScreen(
             isProcessing = state.isProcessing,
             onDismiss = { viewModel.hideSellDialog() },
             onConfirm = { ticketType, paymentMethod, customerName, customerPhone ->
-                val price = viewModel.getTicketPrice(ticketType, state.selectedEvent!!)
+            val price = 0.0 // All tickets are free
                 viewModel.sellTicket(
                     eventId = state.selectedEvent!!.id,
                     ticketType = ticketType,
@@ -285,7 +296,7 @@ fun CashierScreen(
                     customerPhone = customerPhone
                 )
             },
-            getTicketPrice = { ticketType -> viewModel.getTicketPrice(ticketType, state.selectedEvent!!) }
+            getTicketPrice = { 0.0 } // All tickets are free
         )
     }
     if (state.showQRDialog && state.lastSoldTicket != null) {
@@ -316,15 +327,16 @@ private fun CashierStartShiftPrompt(
         Box(
             modifier = Modifier
                 .size(120.dp)
+                .shadow(20.dp, RoundedCornerShape(36.dp), spotColor = Primary.copy(0.3f))
                 .clip(RoundedCornerShape(36.dp))
-                .background(PrimaryContainer),
+                .background(Brush.linearGradient(listOf(GradientStart, AuroraBlue))),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 Icons.Default.PointOfSale,
                 contentDescription = null,
                 modifier = Modifier.size(60.dp),
-                tint = Primary
+                tint = Color.White
             )
         }
 
@@ -603,25 +615,23 @@ fun CashierEventCard(
             ) {
                 CashierTicketPriceBadge(
                     "Standard",
-                    "${event.ticketPrice.toInt()} MAD",
+                    "Free",
                     Primary,
                     PrimaryContainer
                 )
-                if (event.vipPrice != null) {
-                    CashierTicketPriceBadge(
-                        "VIP",
-                        "${event.vipPrice!!.toInt()} MAD",
-                        AccentDark,
-                        WarningContainer
-                    )
-                }
+                CashierTicketPriceBadge(
+                    "VIP",
+                    "Free",
+                    AccentDark,
+                    WarningContainer
+                )
                 Spacer(modifier = Modifier.weight(1f))
                 Surface(
                     shape = RoundedCornerShape(10.dp),
                     color = if (isSelected) Primary.copy(0.12f) else SurfaceVariantLight
                 ) {
                     Text(
-                        "${event.totalTickets - event.soldTickets}/${event.totalTickets}",
+                        "${event.totalTickets - event.reservedTickets}/${event.totalTickets}",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                         style = MaterialTheme.typography.labelSmall,
                         color = if (isSelected) PrimaryDark else OnSurfaceVariantLight,
@@ -847,7 +857,7 @@ private fun CashierSellTicketDialog(
     var customerName by remember { mutableStateOf("") }
     var customerPhone by remember { mutableStateOf("") }
     var quantity by remember { mutableStateOf(1) }
-    val totalPrice = getTicketPrice(selectedTicketType) * quantity
+    val totalPrice = 0.0 // All tickets are free
 
     AlertDialog(
         onDismissRequest = { if (!isProcessing) onDismiss() },
@@ -903,7 +913,7 @@ private fun CashierSellTicketDialog(
                 )
 
                 com.example.eventpay.data.model.TicketType.values().forEach { type ->
-                    val price = getTicketPrice(type)
+                    val price = 0.0 // All tickets are free
                     val isSelected = selectedTicketType == type
                     Surface(
                         modifier = Modifier
@@ -935,7 +945,7 @@ private fun CashierSellTicketDialog(
                                 modifier = Modifier.weight(1f)
                             )
                             Text(
-                                "${String.format("%.0f", price)} MAD",
+                                "Free",
                                 fontWeight = FontWeight.ExtraBold,
                                 color = if (isSelected) Primary else OnSurfaceVariantLight
                             )
@@ -1071,7 +1081,7 @@ private fun CashierSellTicketDialog(
                             color = PrimaryDark
                         )
                         Text(
-                            "${String.format("%.2f", totalPrice)} MAD",
+                            "Free",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
                             color = Primary
@@ -1216,7 +1226,7 @@ private fun CashierQRCodeDialog(
                         HorizontalDivider(color = DividerLight)
                         CashierInfoRow("Type", ticket.ticketType.name)
                         HorizontalDivider(color = DividerLight)
-                        CashierInfoRow("Price", "${String.format("%.2f", ticket.price)} MAD")
+                        CashierInfoRow("Price", "Free")
                     }
                 }
 

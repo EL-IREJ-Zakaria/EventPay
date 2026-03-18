@@ -13,6 +13,8 @@ import com.example.eventpay.data.repository.TicketRepository
 import com.example.eventpay.data.repository.TransactionRepository
 import com.example.eventpay.data.repository.UserRepository
 import com.example.eventpay.domain.model.Event
+import com.example.eventpay.domain.model.EventCategory
+import com.example.eventpay.domain.model.EventStatus
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,7 +34,6 @@ data class EventState(
 class EventViewModel(
     private val eventRepository: EventRepository,
     private val ticketRepository: TicketRepository,
-    private val transactionRepository: TransactionRepository,
     private val userRepository: UserRepository,
     private val firestoreEventRepository: FirestoreEventRepository,
     private val firestoreTicketRepository: FirestoreTicketRepository,
@@ -139,7 +140,6 @@ class EventViewModel(
         description: String,
         location: String,
         date: Long,
-        ticketPrice: Double,
         totalTickets: Int,
         organizerId: String
     ) {
@@ -153,7 +153,6 @@ class EventViewModel(
                 location = location,
                 date = date,
                 endDate = date + (24 * 60 * 60 * 1000), // Default to 1 day after start
-                ticketPrice = ticketPrice,
                 totalTickets = totalTickets,
                 organizerId = organizerId
             )
@@ -188,7 +187,7 @@ class EventViewModel(
             firestoreEventRepository.getEvent(eventId).fold(
                 onSuccess = { event ->
                     // Check if tickets available
-                    if (event.soldTickets >= event.totalTickets) {
+                    if (event.reservedTickets >= event.totalTickets) {
                         _eventState.value = _eventState.value.copy(
                             isLoading = false,
                             error = "No tickets available"
@@ -196,16 +195,8 @@ class EventViewModel(
                         return@launch
                     }
                     
-                    // Calculate price based on ticket type
-                    val price = when (ticketType) {
-                        TicketType.STANDARD -> event.ticketPrice
-                        TicketType.VIP -> event.vipPrice ?: (event.ticketPrice * 2.0)
-                        TicketType.PREMIUM -> event.ticketPrice * 2.5
-                        TicketType.EARLY_BIRD -> event.ticketPrice * 0.8
-                        TicketType.STUDENT -> event.ticketPrice * 0.7
-                        TicketType.GROUP -> event.ticketPrice * 0.75
-                        TicketType.PASS -> event.ticketPrice * 3.0
-                    }
+                    // All tickets are free
+                    val price = 0.0
                     
                     // For wallet payment, check balance
                     if (paymentMethod == PaymentMethod.WALLET) {
@@ -218,17 +209,8 @@ class EventViewModel(
                             return@launch
                         }
                         
-                        if (user.walletBalance < price) {
-                            _eventState.value = _eventState.value.copy(
-                                isLoading = false,
-                                error = "Insufficient wallet balance"
-                            )
-                            return@launch
-                        }
-                        
-                        // Deduct from wallet
-                        val newBalance = user.walletBalance - price
-                        userRepository.updateWalletBalance(userId, newBalance)
+                        // Wallet payment not needed for free tickets
+                        // Skip wallet balance check
                     }
                     
                     // Create ticket
@@ -246,7 +228,7 @@ class EventViewModel(
                             )
                             
                             // Increment sold tickets
-                            firestoreEventRepository.incrementSoldTickets(eventId)
+                            firestoreEventRepository.incrementreservedTickets(eventId)
                             
                             _eventState.value = _eventState.value.copy(
                                 isLoading = false,
@@ -265,6 +247,63 @@ class EventViewModel(
                     _eventState.value = _eventState.value.copy(
                         isLoading = false,
                         error = error.message ?: "Event not found"
+                    )
+                }
+            )
+        }
+    }
+
+    fun createEventFull(
+        name: String,
+        description: String,
+        location: String,
+        date: Long,
+        startTime: String,
+        endTime: String,
+        totalTickets: Int,
+        vipTickets: Int,
+        earlyBirdTickets: Int,
+        ticketPrice: Double,
+        category: EventCategory,
+        contactEmail: String?,
+        contactPhone: String?,
+        organizerId: String
+    ) {
+        viewModelScope.launch {
+            _eventState.value = _eventState.value.copy(isLoading = true, error = null)
+            val endDate = date + (8 * 60 * 60 * 1000L)
+            val event = Event(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                description = description,
+                location = location,
+                date = date,
+                endDate = endDate,
+                totalTickets = totalTickets,
+                vipTickets = vipTickets,
+                earlyBirdTickets = earlyBirdTickets,
+                ticketPrice = ticketPrice,
+                category = category,
+                status = EventStatus.PUBLISHED,
+                startTime = startTime,
+                endTime = endTime,
+                capacity = totalTickets,
+                contactEmail = contactEmail,
+                contactPhone = contactPhone,
+                organizerId = organizerId,
+                isPublished = true
+            )
+            firestoreEventRepository.createEvent(event).fold(
+                onSuccess = {
+                    _eventState.value = _eventState.value.copy(
+                        isLoading = false,
+                        success = "Event created successfully"
+                    )
+                },
+                onFailure = { error ->
+                    _eventState.value = _eventState.value.copy(
+                        isLoading = false,
+                        error = error.message
                     )
                 }
             )
