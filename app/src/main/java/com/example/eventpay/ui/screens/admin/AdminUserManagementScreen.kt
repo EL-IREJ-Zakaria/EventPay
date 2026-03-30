@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.eventpay.data.model.User
+import com.example.eventpay.domain.model.Event
 import com.example.eventpay.ui.admin.AdminViewModel
 import com.example.eventpay.ui.admin.CreateScannerDialog
 import com.example.eventpay.ui.theme.*
@@ -47,6 +48,8 @@ fun AdminUserManagementScreen(
     var showCreateDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
     var filterActive by remember { mutableStateOf<Boolean?>(null) }
+    var expandedScannerId by remember { mutableStateOf<String?>(null) }
+    var scannerPendingDelete by remember { mutableStateOf<User?>(null) }
 
     LaunchedEffect(Unit) {
         adminViewModel.loadScanners()
@@ -81,6 +84,13 @@ fun AdminUserManagementScreen(
                     scannerCount = uiState.scanners.size,
                     activeCount = activeCount,
                     onBack = onBack
+                )
+            },
+            bottomBar = {
+                AdminBottomBar(
+                    selectedDestination = AdminBottomDestination.Scanners,
+                    onHomeClick = onBack,
+                    onScannersClick = { }
                 )
             },
             floatingActionButton = {
@@ -314,10 +324,21 @@ fun AdminUserManagementScreen(
                                         animationSpec = tween(300)
                                     )
                                 ) {
+                                    val assignedEvents = uiState.events.filter { event ->
+                                        scanner.id in event.assignedScanners
+                                    }
                                     ScannerUserCard(
                                         user = scanner,
+                                        assignedEvents = assignedEvents,
+                                        isExpanded = expandedScannerId == scanner.id,
+                                        onClick = {
+                                            expandedScannerId = if (expandedScannerId == scanner.id) null else scanner.id
+                                        },
                                         onToggleActive = { newActive ->
                                             adminViewModel.toggleScannerActive(scanner.id, newActive)
+                                        },
+                                        onDelete = {
+                                            scannerPendingDelete = scanner
                                         }
                                     )
                                 }
@@ -327,6 +348,42 @@ fun AdminUserManagementScreen(
                 }
             }
         }
+    }
+
+    scannerPendingDelete?.let { scanner ->
+        AlertDialog(
+            onDismissRequest = { scannerPendingDelete = null },
+            icon = {
+                Icon(
+                    Icons.Default.DeleteForever,
+                    contentDescription = null,
+                    tint = Error
+                )
+            },
+            title = { Text("Delete scanner") },
+            text = {
+                Text(
+                    "Delete ${scanner.fullName}? The scanner will also be removed from all assigned events."
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        adminViewModel.deleteScanner(scanner.id, scanner.fullName)
+                        expandedScannerId = null
+                        scannerPendingDelete = null
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Error)
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { scannerPendingDelete = null }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 
     if (showCreateDialog) {
@@ -611,7 +668,11 @@ private fun ScannerFilterChip(
 @Composable
 private fun ScannerUserCard(
     user: User,
-    onToggleActive: (Boolean) -> Unit
+    assignedEvents: List<Event>,
+    isExpanded: Boolean,
+    onClick: () -> Unit,
+    onToggleActive: (Boolean) -> Unit,
+    onDelete: () -> Unit
 ) {
     val dateFormat = remember { SimpleDateFormat("dd MMM yyyy", Locale.getDefault()) }
     val initials = user.fullName
@@ -640,11 +701,12 @@ private fun ScannerUserCard(
                 shape = RoundedCornerShape(20.dp),
                 ambientColor = if (user.isActive) ScannerPurple.copy(alpha = 0.08f)
                 else Color.Black.copy(alpha = 0.04f)
-            ),
+            )
+            .clickable(onClick = onClick),
         shape = RoundedCornerShape(20.dp),
         color = SurfaceLight
     ) {
-        Column {
+        Column(modifier = Modifier.animateContentSize()) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -771,20 +833,55 @@ private fun ScannerUserCard(
                             )
                         }
                     }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Surface(
+                        shape = RoundedCornerShape(999.dp),
+                        color = ScannerPurpleLight
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Event,
+                                null,
+                                modifier = Modifier.size(12.dp),
+                                tint = ScannerPurple
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(
+                                "${assignedEvents.size} event(s)",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = ScannerPurple,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
                 }
 
                 Spacer(modifier = Modifier.width(8.dp))
 
-                Switch(
-                    checked = user.isActive,
-                    onCheckedChange = onToggleActive,
-                    colors = SwitchDefaults.colors(
-                        checkedThumbColor = Color.White,
-                        checkedTrackColor = Tertiary,
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = OutlineLight
+                Column(
+                    horizontalAlignment = Alignment.End,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    Icon(
+                        if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                        contentDescription = null,
+                        tint = ScannerPurple
                     )
-                )
+                    Switch(
+                        checked = user.isActive,
+                        onCheckedChange = onToggleActive,
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = Color.White,
+                            checkedTrackColor = Tertiary,
+                            uncheckedThumbColor = Color.White,
+                            uncheckedTrackColor = OutlineLight
+                        )
+                    )
+                }
             }
 
             if (user.isActive) {
@@ -827,6 +924,128 @@ private fun ScannerUserCard(
                         )
                     }
                 }
+            }
+
+            AnimatedVisibility(visible = isExpanded) {
+                Column {
+                    HorizontalDivider(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        color = DividerLight,
+                        thickness = 0.8.dp
+                    )
+                    Column(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                "Assigned events",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.ExtraBold,
+                                color = OnSurfaceLight
+                            )
+                            Surface(
+                                shape = RoundedCornerShape(999.dp),
+                                color = ScannerPurple.copy(alpha = 0.12f)
+                            ) {
+                                Text(
+                                    "${assignedEvents.size}",
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.ExtraBold,
+                                    color = ScannerPurple
+                                )
+                            }
+                        }
+
+                        if (assignedEvents.isEmpty()) {
+                            Text(
+                                "No events assigned to this scanner yet.",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = OnSurfaceVariantLight
+                            )
+                        } else {
+                            assignedEvents.forEach { event ->
+                                AssignedEventRow(
+                                    event = event,
+                                    dateFormat = dateFormat
+                                )
+                            }
+                        }
+
+                        OutlinedButton(
+                            onClick = onDelete,
+                            shape = RoundedCornerShape(12.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = Error
+                            )
+                        ) {
+                            Icon(
+                                Icons.Outlined.DeleteOutline,
+                                contentDescription = null,
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Delete scanner", fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AssignedEventRow(
+    event: Event,
+    dateFormat: SimpleDateFormat
+) {
+    Surface(
+        shape = RoundedCornerShape(14.dp),
+        color = ScannerPurpleLight.copy(alpha = 0.45f)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 10.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(36.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(ScannerPurple.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Outlined.Event,
+                    contentDescription = null,
+                    tint = ScannerPurple,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
+            Spacer(modifier = Modifier.width(10.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    event.name,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = OnSurfaceLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(modifier = Modifier.height(2.dp))
+                Text(
+                    "${dateFormat.format(Date(event.date))} • ${event.location}",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = OnSurfaceVariantLight,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
             }
         }
     }

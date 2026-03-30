@@ -316,4 +316,35 @@ class FirestoreEventRepository {
             Result.failure(e)
         }
     }
+
+    /**
+     * Remove a scanner from every event it is assigned to.
+     * Returns the number of updated events.
+     */
+    suspend fun removeScannerFromAllEvents(scannerId: String): Result<Int> {
+        return try {
+            val snapshot = eventsCollection
+                .whereArrayContains("assignedScanners", scannerId)
+                .get()
+                .await()
+
+            if (snapshot.isEmpty) {
+                return Result.success(0)
+            }
+
+            val batch = firestore.batch()
+            snapshot.documents.forEach { document ->
+                batch.update(
+                    document.reference,
+                    "assignedScanners",
+                    com.google.firebase.firestore.FieldValue.arrayRemove(scannerId)
+                )
+            }
+            batch.commit().await()
+
+            Result.success(snapshot.size())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -337,6 +337,38 @@ class AdminViewModel(
         }
     }
 
+    fun deleteScanner(scannerId: String, scannerName: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true, error = null)
+
+            val removedAssignments = eventRepository.removeScannerFromAllEvents(scannerId).getOrElse { error ->
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = error.message ?: "Failed to remove scanner from assigned events"
+                )
+                return@launch
+            }
+
+            firebaseService.deleteScannerAccount(scannerId).fold(
+                onSuccess = {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        successMessage = "Scanner $scannerName deleted and removed from $removedAssignments event(s)"
+                    )
+                    loadScanners()
+                    loadEvents()
+                    loadDashboard()
+                },
+                onFailure = { error ->
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        error = error.message ?: "Failed to delete scanner"
+                    )
+                }
+            )
+        }
+    }
+
     fun loadParticipants(eventId: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(participantsLoading = true, selectedEventId = eventId)

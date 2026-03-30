@@ -195,6 +195,15 @@ class FirebaseService {
         }
     }
 
+    suspend fun deleteScannerAccount(scannerId: String): Result<Unit> {
+        return try {
+            usersCollection.document(scannerId).delete().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     suspend fun updateUserWalletBalance(userId: String, newBalance: Double): Result<Unit> {
         return try {
             usersCollection.document(userId).update("walletBalance", newBalance).await()

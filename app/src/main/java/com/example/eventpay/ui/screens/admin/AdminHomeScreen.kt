@@ -82,6 +82,13 @@ fun AdminHomeScreen(
                     onMenuToggle = { showMenu = it },
                     onLogout = onLogout
                 )
+            },
+            bottomBar = {
+                AdminBottomBar(
+                    selectedDestination = AdminBottomDestination.Home,
+                    onHomeClick = { },
+                    onScannersClick = onNavigateToUsers
+                )
             }
         ) { padding ->
             LazyColumn(
