@@ -44,6 +44,8 @@ fun AdminHomeScreen(
     onNavigateToEvents: () -> Unit,
     onNavigateToUsers: () -> Unit,
     onNavigateToScanner: () -> Unit,
+    onNavigateToDashboard: () -> Unit = {},
+    onNavigateToAnalytics: () -> Unit = {},
     onLogout: () -> Unit
 ) {
     val uiState by adminViewModel.uiState.collectAsState()
@@ -171,6 +173,22 @@ fun AdminHomeScreen(
                             gradient = listOf(Tertiary, TertiaryDark),
                             accentColor = TertiaryLight,
                             onClick = onNavigateToScanner
+                        )
+                        PremiumActionCard(
+                            icon = Icons.Filled.BarChart,
+                            title = "Analytics",
+                            subtitle = "Revenue, tickets and check-in stats",
+                            gradient = listOf(Color(0xFF0F766E), Color(0xFF0D9488)),
+                            accentColor = Color(0xFF5EEAD4),
+                            onClick = onNavigateToAnalytics
+                        )
+                        PremiumActionCard(
+                            icon = Icons.Filled.Dashboard,
+                            title = "Dashboard",
+                            subtitle = "Live revenue and transaction overview",
+                            gradient = listOf(Color(0xFF1D4ED8), Color(0xFF2563EB)),
+                            accentColor = Color(0xFF93C5FD),
+                            onClick = onNavigateToDashboard
                         )
                     }
                 }

@@ -36,7 +36,7 @@ import java.util.*
 @Composable
 fun DashboardScreen(
     onNavigateBack: () -> Unit,
-    viewModel: DashboardViewModel = viewModel()
+    viewModel: DashboardViewModel
 ) {
     val state by viewModel.state.collectAsState()
 

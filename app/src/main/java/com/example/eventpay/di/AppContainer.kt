@@ -16,6 +16,7 @@ import com.example.eventpay.security.QRCryptoManager
 import com.example.eventpay.ui.admin.AdminViewModel
 import com.example.eventpay.ui.auth.AuthViewModel
 import com.example.eventpay.ui.cashier.CashierViewModel
+import com.example.eventpay.ui.dashboard.AnalyticsViewModel
 import com.example.eventpay.ui.dashboard.DashboardViewModel
 import com.example.eventpay.ui.event.EventViewModel
 import com.example.eventpay.ui.qrcode.QRCodeViewModel
@@ -60,7 +61,7 @@ class AppContainer(private val context: Context) {
         eventRepository,
         firestoreTicketRepository
     )
-val cashierViewModel = CashierViewModel(
+    val cashierViewModel = CashierViewModel(
         firestoreEventRepository,
         firestoreTicketRepository,
         firestoreTransactionRepository,
@@ -75,6 +76,12 @@ val cashierViewModel = CashierViewModel(
     )
     val adminViewModel = AdminViewModel(firebaseService, firestoreEventRepository)
     val scannerViewModel = ScannerViewModel(firebaseService, firestoreEventRepository, firestoreTicketRepository)
+    val analyticsViewModel = AnalyticsViewModel(
+        firestoreEventRepository,
+        firestoreTicketRepository,
+        firestoreTransactionRepository,
+        firebaseService
+    )
 
     companion object {
         @Volatile

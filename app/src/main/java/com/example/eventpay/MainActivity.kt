@@ -13,8 +13,10 @@ import com.example.eventpay.ui.screens.admin.AdminEventListScreen
 import com.example.eventpay.ui.screens.admin.AdminHomeScreen
 import com.example.eventpay.ui.screens.admin.AdminUserManagementScreen
 import com.example.eventpay.ui.screens.admin.ParticipantsScreen
+import com.example.eventpay.ui.screens.scanner.ScanHistoryScreen
 import com.example.eventpay.ui.screens.scanner.ScannerHomeScreen
 import com.example.eventpay.ui.theme.EventPayTheme
+import com.example.eventpay.ui.cashier.CashierViewModel
 
 class MainActivity : ComponentActivity() {
     lateinit var container: AppContainer
@@ -25,7 +27,10 @@ class MainActivity : ComponentActivity() {
         container = AppContainer.getInstance(applicationContext)
 
         setContent {
-            EventPayTheme {
+            val authState by container.authViewModel.authState.collectAsState()
+            val isDarkTheme = authState.currentUser?.preferences?.darkMode ?: false
+            
+            EventPayTheme(darkTheme = isDarkTheme) {
                 EventPayApp(container = container)
             }
         }
@@ -41,8 +46,12 @@ sealed class Screen {
     object AdminEvents : Screen()
     object AdminUsers : Screen()
     data class AdminParticipants(val eventId: String) : Screen()
+    object AdminDashboard : Screen()
+    object AdminAnalytics : Screen()
+    object AdminCashier : Screen()
 
     object ScannerHome : Screen()
+    object ScanHistory : Screen()
 }
 
 @Composable
@@ -105,12 +114,28 @@ fun EventPayApp(container: AppContainer) {
                     onNavigateToEvents = { currentScreen = Screen.AdminEvents },
                     onNavigateToUsers = { currentScreen = Screen.AdminUsers },
                     onNavigateToScanner = { currentScreen = Screen.ScannerHome },
+                    onNavigateToDashboard = { currentScreen = Screen.AdminDashboard },
+                    onNavigateToAnalytics = { currentScreen = Screen.AdminAnalytics },
                     onLogout = {
                         authViewModel.logout()
                         currentScreen = Screen.Login
                     }
                 )
             }
+        }
+
+        is Screen.AdminDashboard -> {
+            DashboardScreen(
+                onNavigateBack = { currentScreen = Screen.AdminHome },
+                viewModel = container.dashboardViewModel
+            )
+        }
+
+        is Screen.AdminAnalytics -> {
+            AnalyticsDashboardScreen(
+                onNavigateBack = { currentScreen = Screen.AdminHome },
+                viewModel = container.analyticsViewModel
+            )
         }
 
         is Screen.AdminEvents -> {
@@ -177,6 +202,22 @@ fun EventPayApp(container: AppContainer) {
                     }
                 )
             }
+        }
+
+        is Screen.ScanHistory -> {
+            val uiState by container.scannerViewModel.uiState.collectAsState()
+            ScanHistoryScreen(
+                checkIns = uiState.checkInHistory,
+                isLoading = uiState.isLoading,
+                onBack = { currentScreen = Screen.ScannerHome }
+            )
+        }
+
+        is Screen.AdminCashier -> {
+            CashierScreen(
+                onNavigateBack = { currentScreen = Screen.AdminHome },
+                viewModel = container.cashierViewModel
+            )
         }
     }
 }

@@ -47,7 +47,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 @Composable
 fun CashierScreen(
     onNavigateBack: () -> Unit,
-    viewModel: CashierViewModel = viewModel()
+    viewModel: CashierViewModel
 ) {
     val state by viewModel.state.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
