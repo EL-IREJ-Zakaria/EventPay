@@ -6,6 +6,7 @@ import com.example.eventpay.data.firebase.CheckInAttemptResult
 import com.example.eventpay.data.firebase.FirebaseService
 import com.example.eventpay.data.firebase.FirestoreEventRepository
 import com.example.eventpay.data.firebase.FirestoreTicketRepository
+import com.example.eventpay.domain.model.CheckInRecord
 import com.example.eventpay.domain.model.Event
 import com.example.eventpay.domain.model.CheckInResult as DomainCheckInResult
 import kotlinx.coroutines.delay
@@ -24,6 +25,7 @@ data class ScannerUiState(
     val lastScannedTicketId: String? = null,
     val lastScannedName: String? = null,
     val sessionCheckInCount: Int = 0,
+    val checkInHistory: List<CheckInRecord> = emptyList(),
     val error: String? = null
 )
 
@@ -130,12 +132,24 @@ class ScannerViewModel(
             when (checkInResult) {
                 is CheckInAttemptResult.Success -> {
                     scannedInSession.add(rawQrData)
+                    val record = CheckInRecord(
+                        id = checkInResult.ticket.id + "_" + System.currentTimeMillis(),
+                        ticketId = checkInResult.ticket.id,
+                        eventId = eventId,
+                        userId = checkInResult.ticket.userId,
+                        scannedBy = scannerId,
+                        scannedByName = scannerName,
+                        scannedAt = System.currentTimeMillis(),
+                        deviceId = android.os.Build.DEVICE,
+                        result = DomainCheckInResult.SUCCESS
+                    )
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
                         scanStatus = ScanStatus.SUCCESS,
                         lastScannedTicketId = checkInResult.ticket.id,
-                        lastScannedName = checkInResult.ticket.userId, // Use userId instead of attendeeName
+                        lastScannedName = checkInResult.ticket.userId,
                         sessionCheckInCount = _uiState.value.sessionCheckInCount + 1,
+                        checkInHistory = listOf(record) + _uiState.value.checkInHistory,
                         error = null
                     )
                 }

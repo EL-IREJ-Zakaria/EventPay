@@ -42,7 +42,7 @@ import java.util.Locale
 @Composable
 fun AnalyticsDashboardScreen(
     onNavigateBack: () -> Unit,
-    viewModel: AnalyticsViewModel = viewModel()
+    viewModel: AnalyticsViewModel
 ) {
     val state by viewModel.state.collectAsState()
 

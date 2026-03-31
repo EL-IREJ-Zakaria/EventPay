@@ -1,5 +1,125 @@
 # EventPay - Project Rapport
 
+---
+
+## 🔍 Current Project Status (Auto-Generated)
+
+### Overall Status: 🟡 In Development — Core Complete, Polish Needed
+
+### ✅ Implemented & Working
+
+| Feature | Details |
+|---|---|
+| Firebase Auth (email + biometric) | Fully wired via `AuthViewModel` + `FirebaseService` |
+| Role-based routing (ADMIN / SCANNER) | `MainActivity` handles routing via `Screen` sealed class |
+| Admin Home Screen | Stats, quick actions, recent events, shimmer loading |
+| Admin Event List | Create, view, manage events |
+| Admin User Management | Create scanner accounts, assign events |
+| Participants Screen | Manual participant add with ticket type |
+| Scanner Home | Event selection + live QR camera scanning |
+| QR Scanning (ML Kit + CameraX) | Real-time barcode detection |
+| Scan result feedback | Success / Invalid / Duplicate / Not Found states |
+| Room Database v6 | User, Event, Ticket, Transaction entities |
+| Firestore Repositories | Event, Ticket, Transaction cloud sync |
+| Offline Sync Infrastructure | `SyncManager`, `SyncWorker`, `OfflineSyncManager` |
+| Anti-fraud Engine | `FraudDetectionEngine`, `AuditLogManager`, `SecurityRulesEngine` |
+| QR Crypto | Encrypted QR generation + validation via `QRCryptoManager` |
+| Biometric Auth | `BiometricAuthManager` integrated in login |
+| Push Notifications (FCM) | `EventPayMessagingService` + `NotificationHelper` |
+| Material 3 Theme | Custom colors, Nunito font, light theme |
+| Splash Screen | Auth-aware routing on launch |
+
+### ⚠️ Partially Implemented
+
+| Feature | Issue |
+|---|---|
+| `NavGraph.kt` | Exists but **never used** — `MainActivity` uses its own `Screen` sealed class |
+| `CashierScreen` | Screen + ViewModel exist but wallet routes are **disabled** (pop back immediately) |
+| `DashboardScreen` / `AnalyticsDashboardScreen` | Screens exist, ViewModels wired, real data binding unconfirmed |
+| `ScanHistoryScreen` | File exists under `scanner/` but **not reachable** from current navigation |
+| `HomeScreen` | Exists but only reachable via the unused `NavGraph` |
+| `EventDetailScreen` / `CreateEventScreen` | Exist but only reachable via unused `NavGraph` |
+| `TicketDetailScreen` | Exists, not connected to any navigation |
+| `MultiDeviceSyncManager` / `ConflictResolutionEngine` | Domain layer exists, not confirmed wired end-to-end |
+| Dark mode | `UserPreferences.darkMode` field exists but `Theme.kt` does not use it |
+
+### ❌ Not Implemented / Known TODOs
+
+#### 🔴 Navigation — Dead Code
+
+| Task | File | What to do |
+|---|---|---|
+| `NavGraph.kt` is never used | `ui/navigation/NavGraph.kt` | Either wire it into `MainActivity` replacing the `Screen` sealed class, or delete it |
+| `HomeScreen` unreachable | `ui/screens/HomeScreen.kt` | Only reachable via unused `NavGraph` — connect or remove |
+| `EventDetailScreen` unreachable | `ui/screens/EventDetailScreen.kt` | Same — connect via `AdminEventListScreen` or `NavGraph` |
+| `CreateEventScreen` unreachable | `ui/screens/CreateEventScreen.kt` | Add navigation from `AdminEventListScreen` FAB |
+| `TicketDetailScreen` unreachable | `ui/screens/TicketDetailScreen.kt` | Not connected to any navigation path |
+| `ScanHistoryScreen` unreachable | `ui/screens/scanner/ScanHistoryScreen.kt` | Screen is **fully built** (search, filters, shimmer, stats) — just needs a nav entry from `ScannerActiveScreen` |
+| `AnalyticsDashboardScreen` unreachable | `ui/screens/AnalyticsDashboardScreen.kt` | Fully built — add nav from `AdminHomeScreen` |
+| `DashboardScreen` unreachable | `ui/screens/DashboardScreen.kt` | Fully built — add nav from `AdminHomeScreen` |
+
+#### 🔴 Data / Logic Bugs
+
+| Task | File | What to do |
+|---|---|---|
+| `checkedInCount` hardcoded to `0` | `NavGraph.kt` line ~160 | Fetch real value from `EventViewModel` or `AdminViewModel` |
+| `onPurchaseTicket` lambda is empty | `NavGraph.kt` `EventDetailScreen` composable | Implement navigation to ticket purchase / cashier flow |
+| `onViewTickets` lambda is empty | `NavGraph.kt` `EventDetailScreen` composable | Navigate to ticket list for that event |
+| Wallet routes pop back immediately | `NavGraph.kt` — Wallet, TopUp, TransactionHistory | Either implement or remove routes and hide wallet UI entry points |
+| `CashierScreen` uses `viewModel()` factory | `CashierScreen.kt` line ~52 | `CashierViewModel` needs a factory — `viewModel()` will crash without Hilt or a `ViewModelProvider.Factory` |
+| `DashboardScreen` uses `viewModel()` factory | `DashboardScreen.kt` line ~42 | Same issue — `DashboardViewModel` requires constructor params, no factory provided |
+| `AnalyticsDashboardScreen` uses `viewModel()` factory | `AnalyticsDashboardScreen.kt` line ~47 | Same issue — `AnalyticsViewModel` requires constructor params |
+
+#### 🟡 Architecture
+
+| Task | File | What to do |
+|---|---|---|
+| Hilt declared but unused | `build.gradle.kts` + `di/RepositoryModule.kt` | Either complete Hilt setup (add `@HiltAndroidApp`, `@AndroidEntryPoint`, `@HiltViewModel`) or remove Hilt and keep `AppContainer` |
+| `AppContainer` not thread-safe for ViewModels | `di/AppContainer.kt` | ViewModels are created as properties — they share state across recompositions. Use a proper factory or Hilt |
+| `fallbackToDestructiveMigration()` | `data/local/AppDatabase.kt` line ~35 | Replace with proper `Migration` objects before any production release |
+| Duplicate `Screen` sealed class + `NavRoute` sealed class | `MainActivity.kt` + `NavRoutes.kt` | Two parallel navigation systems — consolidate into one |
+
+#### 🟡 UI / UX
+
+| Task | File | What to do |
+|---|---|---|
+| Dark mode preference ignored | `ui/theme/Theme.kt` | `UserPreferences.darkMode` exists — pass it to `dynamicDarkColorScheme` / `darkColorScheme` in `EventPayTheme` |
+| No audio feedback on scan | `ScannerHomeScreen.kt` | `ScannerFeatures` spec mentions audio alerts — not implemented |
+| No auto-logout / session timeout | `AuthViewModel.kt` | Spec mentions auto-logout for inactive sessions — not implemented |
+| `ScanHistoryScreen` tab missing in scanner | `ScannerHomeScreen.kt` | Screen is ready — add a bottom tab or button in `ScannerActiveScreen` to navigate to it |
+
+#### 🟢 Roadmap (not started)
+
+| Feature | Notes |
+|---|---|
+| Payment gateway (Stripe / PayPal) | Retrofit + OkHttp already in deps — just needs API integration |
+| Email ticket delivery (PDF) | Generate PDF from QR bitmap, send via Firebase Extension or SMTP |
+| Export reports (PDF / Excel) | `CashierDailyReportDialog` generates text report — extend to file export |
+| Multi-language support (i18n) | Add `strings.xml` per locale, wrap hardcoded strings |
+| `google-services.json` | Not in repo — must be added manually before any build |
+
+### 📁 Codebase Size
+
+| Package | Files |
+|---|---|
+| `data/` | ~20 files |
+| `domain/` | ~22 files |
+| `ui/screens/` | ~14 screens |
+| `ui/` (ViewModels, components) | ~12 files |
+| `security/`, `notification/`, `util/` | ~7 files |
+| **Total** | **~75 Kotlin files** |
+
+### 🔑 Priority Next Steps
+
+1. Connect `NavGraph.kt` or remove it — currently dead code
+2. Wire `ScanHistoryScreen` into scanner navigation
+3. Fix `checkedInCount` — fetch real value from ViewModel
+4. Decide on Hilt vs `AppContainer` — both exist, only one is used
+5. Enable dark mode — preference field exists but is ignored by `Theme.kt`
+6. Replace `fallbackToDestructiveMigration` with proper Room migrations before release
+
+---
+
 ## Executive Summary
 
 **Project Name:** EventPay  
